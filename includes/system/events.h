@@ -32,19 +32,19 @@ typedef enum _eventP {
         EVENT_PRIORITY_HIGH,
 } eventPriority;
 
-typedef void (*event_callback_t)(void);
-
-typedef int16_t frequency_t;
+typedef int16_t time_t;
 
 typedef uint16_t hEvent_t;
+
+typedef time_t (*event_callback_t)(void);
 
 void init_events(void);
 
 void trigger_event(hEvent_t hEvent);
 
-uint16_t register_event(event_callback_t event_callback);
+hEvent_t register_event(event_callback_t event_callback);
 
-uint16_t register_event_p(event_callback_t event_callback, eventPriority priority, frequency_t frequency);
+hEvent_t register_event_p(event_callback_t event_callback, eventPriority priority);
 
 inline void event_manager(eventPriority priority);
 

@@ -37,7 +37,7 @@ void LED_Init(led_control_t* led_controller, size_t len) {
     for (i = 0; i < len; ++i) {
         led_controller[i].CS_mask = 1 << led_controller[i].pin->CS_pin;
         led_controller[i].wait = 0;
-        LED_updateBlink(i, LED_OFF);
+        LED_updateBlink(led_controller, i, LED_OFF);
     }
 }
 

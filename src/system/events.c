@@ -28,7 +28,6 @@ typedef struct _tagEVENT {
         bool eventPending;
         event_callback_t event_callback;
         uint8_t priority;
-        frequency_t frequency;
 } EVENT;
 
 /******************************************************************************/
@@ -49,7 +48,6 @@ void init_events(void) {
         events[eventIndex].event_callback = NULL;
         events[eventIndex].eventPending = false;
         events[eventIndex].priority = EVENT_PRIORITY_LOW;
-        events[eventIndex].frequency = -1;
     }
     event_init_done = true;
 }
@@ -77,14 +75,13 @@ hEvent_t register_event(event_callback_t event_callback) {
     return register_event_p(event_callback, EVENT_PRIORITY_MEDIUM, -1);
 }
 
-hEvent_t register_event_p(event_callback_t event_callback, eventPriority priority, frequency_t frequency) {
+hEvent_t register_event_p(event_callback_t event_callback, eventPriority priority) {
     hEvent_t eventIndex;
 
     for (eventIndex = 0; eventIndex < MAX_EVENTS; eventIndex++) {
         if (events[eventIndex].event_callback == NULL) {
             events[eventIndex].event_callback = event_callback;
             events[eventIndex].priority = priority;
-            events[eventIndex].frequency = frequency;
             return eventIndex;
         }
     }
