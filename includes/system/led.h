@@ -21,8 +21,69 @@
 #ifdef	__cplusplus
 extern "C" {
 #endif
+    
+#include <stdint.h>        /* Includes uint16_t definition                    */
+#include <stdbool.h>       /* Includes true/false definition                  */
+#include <string.h>
+    
+#include "system/gpio.h"
+    
+    typedef struct led_control {
+        pin_t * pin;
+        unsigned int CS_mask;
+        unsigned int counter;
+        unsigned int fr_blink;
+        unsigned int wait;
+        short number_blink;
+    } led_control_t;
 
+/******************************************************************************/
+/* User Level #define Macros                                                  */
+/******************************************************************************/
+    
+#define LED_ALWAYS_HIGH -1
+#define LED_OFF 0
+    
+/******************************************************************************/
+/* User Function Prototypes                                                   */
+/******************************************************************************/
+    
+    /**
+     * Initialization LEDs
+     * @param led_controller
+     * @param len
+     */
+    void LED_Init(led_control_t* led_controller, size_t len);
+    
+    /**
+     * Update frequency or type of blink
+     * @param led array of available leds
+     * @param num number led
+     * @param blink number of blinks
+     */
+    void LED_updateBlink(led_control_t *led, short num, short blink);
 
+    /**
+     * Blink control led
+     * @param led to control
+     */
+    inline void LED_blinkController(led_control_t *led);
+
+    /**
+     * 
+     * @param led_controller
+     * @param load_blink
+     * @param len
+     */
+    void LED_blinkFlush(led_control_t* led_controller, short* load_blink, size_t len);
+    
+    /**
+     * 
+     * @param led_controller
+     * @param load_blink
+     * @param len
+     */
+    void LED_effectStop(led_control_t* led_controller, short* load_blink, size_t len);
 
 
 #ifdef	__cplusplus
