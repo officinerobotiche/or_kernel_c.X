@@ -8,6 +8,7 @@
         <itemPath>includes/system/events.h</itemPath>
         <itemPath>includes/system/led.h</itemPath>
         <itemPath>includes/system/gpio.h</itemPath>
+        <itemPath>includes/system/task_manager.h</itemPath>
       </logicalFolder>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
@@ -21,6 +22,7 @@
         <itemPath>src/system/events.c</itemPath>
         <itemPath>src/system/led.c</itemPath>
         <itemPath>includes/system/gpio.c</itemPath>
+        <itemPath>src/system/task_manager.c</itemPath>
       </logicalFolder>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
@@ -29,6 +31,9 @@
       <itemPath>Makefile</itemPath>
     </logicalFolder>
   </logicalFolder>
+  <sourceRootList>
+    <Elem>src/system</Elem>
+  </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
     <conf name="default" type="3">

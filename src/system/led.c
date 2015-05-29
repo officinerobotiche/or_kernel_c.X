@@ -27,13 +27,15 @@
 
 bool led_effect = false;
 bool first = true;
+uint16_t* freq_cqu;
 
 /*****************************************************************************/
 /* Communication Functions                                                   */
 /*****************************************************************************/
 
-void LED_Init(led_control_t* led_controller, size_t len) {
+void LED_Init(uint16_t* freq, led_control_t* led_controller, size_t len) {
     int i;
+    freq_cqu = freq;
     for (i = 0; i < len; ++i) {
         bit_setup(&led_controller[i].pin);
         led_controller[i].wait = 0;
@@ -53,7 +55,7 @@ void LED_updateBlink(led_control_t* led_controller, short num, short blink) {
             bit_high(&led_controller[num].pin);
             break;
         default:
-            led_controller[num].fr_blink = SYSTEM_FREQ / (2 * led_controller[num].number_blink);
+            led_controller[num].fr_blink = *freq_cqu / (2 * led_controller[num].number_blink);
             break;
     }
     led_controller[num].counter = 0;
@@ -69,26 +71,31 @@ void LED_updateBlink(led_control_t* led_controller, short num, short blink) {
  * ! WAIT   Tc/2-WAIT  !   Tc/2       !
  */
 
-inline void LED_blinkController(led_control_t *led) {
-    if (led->counter > led->wait && led->counter < SYSTEM_FREQ) {
-        if (led->counter % led->fr_blink == 0) {
-            //Toggle bit
-            bit_toggle(&led->pin);
+inline void LED_blinkController(led_control_t *led, size_t len) {
+    short i;
+    for(i = 0; i < len; ++i) {
+        if (led[i].number_blink > LED_OFF) {
+            if (led[i].counter > led[i].wait && led[i].counter < *freq_cqu) {
+                if (led[i].counter % led[i].fr_blink == 0) {
+                    //Toggle bit
+                    bit_toggle(&led[i].pin);
+                }
+                led[i].counter++;
+            } else if (led[i].counter >= 3 * *freq_cqu / 2) {
+                led[i].counter = 0;
+            } else {
+                //Clear bit - Set to 0
+                bit_low(&led[i].pin);
+                led[i].counter++;
+            }
         }
-        led->counter++;
-    } else if (led->counter >= 3 * SYSTEM_FREQ / 2) {
-        led->counter = 0;
-    } else {
-        //Clear bit - Set to 0
-        bit_low(&led->pin);
-        led->counter++;
     }
 }
 
 void LED_blinkFlush(led_control_t* led_controller, short* load_blink, size_t len) {
     int i;
     for (i = 0; i < len; ++i) {
-        led_controller[i].wait = i * ((float) SYSTEM_FREQ / len);
+        led_controller[i].wait = i * ((float) *freq_cqu / len);
         load_blink[i] = led_controller[i].number_blink;
         LED_updateBlink(led_controller, i, 1);
     }

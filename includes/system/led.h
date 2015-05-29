@@ -28,6 +28,16 @@ extern "C" {
     
 #include "system/gpio.h"
     
+    /**
+     * Struct to control blink led
+     * - port name to bit register to mount led
+     * - counter to control blink led
+     * - number of blink in a period, if:
+     *      -# -1 fixed led - LED_ALWAYS_HIGH
+     *      -# 0 led off - LED_OFF
+     *      -# n number of blink
+     */
+    
     typedef struct led_control {
         bit_control_t pin;
         unsigned int counter;
@@ -52,7 +62,7 @@ extern "C" {
      * @param led_controller
      * @param len
      */
-    void LED_Init(led_control_t* led_controller, size_t len);
+    void LED_Init(uint16_t* freq, led_control_t* led_controller, size_t len);
     
     /**
      * Update frequency or type of blink
@@ -66,7 +76,7 @@ extern "C" {
      * Blink control led
      * @param led to control
      */
-    inline void LED_blinkController(led_control_t *led);
+    inline void LED_blinkController(led_control_t *led, size_t len);
 
     /**
      * 

@@ -25,12 +25,12 @@
 #define LNG_EVENTPRIORITY sizeof(eventPriority)
 
 #define MAX_EVENTS 16
-#define INVALID_HANDLE 0xFFFF
 
 typedef struct _tagEVENT {
         bool eventPending;
         event_callback_t event_callback;
         uint8_t priority;
+        time_t time;
 } EVENT;
 
 typedef struct _interrupt_bit {
@@ -58,6 +58,7 @@ void init_events(void) {
         events[eventIndex].event_callback = NULL;
         events[eventIndex].eventPending = false;
         events[eventIndex].priority = EVENT_PRIORITY_LOW;
+        events[eventIndex].time = 0;
     }
     for (priorityIndex = 0; priorityIndex < LNG_EVENTPRIORITY; ++priorityIndex) {
         interrupts[priorityIndex].available = false;
@@ -68,6 +69,7 @@ void init_events(void) {
 void register_interrupt(eventPriority priority, hardware_bit_t* pin) {
     interrupts[priority].interrupt_bit.pin = pin;
     bit_setup(&interrupts[priority].interrupt_bit);
+    bit_low(&interrupts[priority].interrupt_bit);
     interrupts[priority].available = true;
 }
 
@@ -109,9 +111,13 @@ inline void event_manager(eventPriority priority) {
             if ((pEvent->eventPending == true) && (pEvent->priority == priority)) {
                 pEvent->eventPending = false;
                 if (pEvent->event_callback != NULL) {
-                    pEvent->event_callback();
+                    pEvent->time = pEvent->event_callback();
                 }
             }
         }
     }
+}
+
+inline time_t get_time(hEvent_t hEvent) {
+    return events[hEvent].time;
 }

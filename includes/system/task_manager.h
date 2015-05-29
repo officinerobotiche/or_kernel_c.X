@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Officine Robotiche
+ * Copyright (C) 2015 Officine Robotiche
  * Author: Raffaello Bonghi
  * email:  raffaello.bonghi@officinerobotiche.it
  * Permission is granted to copy, distribute, and/or modify this program
@@ -15,34 +15,24 @@
  * Public License for more details
 */
 
-#ifndef GPIO_H
-#define	GPIO_H
+#ifndef TASK_MANAGER_H
+#define	TASK_MANAGER_H
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-    typedef struct _hardware_bit {
-        volatile unsigned int * CS_PORT;
-        const unsigned int CS_pin;
-    } hardware_bit_t;
+    #include "system/events.h"
+
+    typedef uint16_t hTask_t;
     
-    typedef struct _bit_control {
-        hardware_bit_t * pin;
-        unsigned int CS_mask;
-    } bit_control_t;
-    
-    inline void bit_setup(bit_control_t* bit_control);
-    
-    inline void bit_high(bit_control_t* bit_control);
-    
-    inline void bit_low(bit_control_t* bit_control);
-    
-    inline void bit_toggle(bit_control_t* bit_control);
+    void task_load(hEvent_t hEvent);
+
+    inline void task_manager(void);
 
 #ifdef	__cplusplus
 }
 #endif
 
-#endif	/* GPIO_H */
+#endif	/* TASK_MANAGER_H */
 

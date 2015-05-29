@@ -25,6 +25,10 @@ extern "C" {
 #include <stdint.h>        /* Includes uint16_t definition                    */
 #include <stdbool.h>       /* Includes true/false definition                  */
 #include <string.h>
+    
+    #include <system/gpio.h>
+
+    #define INVALID_HANDLE 0xFFFF
 
 typedef enum _eventP {
         EVENT_PRIORITY_LOW = 0,
@@ -40,6 +44,8 @@ typedef time_t (*event_callback_t)(void);
 
 void init_events(void);
 
+void register_interrupt(eventPriority priority, hardware_bit_t* pin);
+
 void trigger_event(hEvent_t hEvent);
 
 hEvent_t register_event(event_callback_t event_callback);
@@ -47,6 +53,8 @@ hEvent_t register_event(event_callback_t event_callback);
 hEvent_t register_event_p(event_callback_t event_callback, eventPriority priority);
 
 inline void event_manager(eventPriority priority);
+
+inline time_t get_time(hEvent_t hEvent);
 
 #ifdef	__cplusplus
 }
