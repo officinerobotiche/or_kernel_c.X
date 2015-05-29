@@ -54,7 +54,7 @@ void init_events(void) {
     hEvent_t eventIndex;
     unsigned short priorityIndex;
     
-    for (eventIndex = 0; eventIndex < MAX_EVENTS; eventIndex++) {
+    for (eventIndex = 0; eventIndex < MAX_EVENTS; ++eventIndex) {
         events[eventIndex].event_callback = NULL;
         events[eventIndex].eventPending = false;
         events[eventIndex].priority = EVENT_PRIORITY_LOW;
@@ -90,7 +90,7 @@ hEvent_t register_event_p(event_callback_t event_callback, eventPriority priorit
     hEvent_t eventIndex;
 
     if (interrupts[priority].available) {
-        for (eventIndex = 0; eventIndex < MAX_EVENTS; eventIndex++) {
+        for (eventIndex = 0; eventIndex < MAX_EVENTS; ++eventIndex) {
             if (events[eventIndex].event_callback == NULL) {
                 events[eventIndex].event_callback = event_callback;
                 events[eventIndex].priority = priority;
@@ -106,7 +106,7 @@ inline void event_manager(eventPriority priority) {
     EVENT* pEvent;
 
     if (event_init_done) {
-        for (eventIndex = 0; eventIndex < MAX_EVENTS; eventIndex++) {
+        for (eventIndex = 0; eventIndex < MAX_EVENTS; ++eventIndex) {
             pEvent = &events[eventIndex];
             if ((pEvent->eventPending == true) && (pEvent->priority == priority)) {
                 pEvent->eventPending = false;

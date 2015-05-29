@@ -26,7 +26,7 @@
 typedef struct _tagTASK {
     hEvent_t event;
     uint16_t counter;
-    uint16_t frequency;
+    frequency_t frequency;
 } TASK;
 
 /******************************************************************************/
@@ -42,25 +42,42 @@ TASK tasks[MAX_TASKS];
 void task_init(void) {
     hTask_t taskIndex;
     
-    for (taskIndex = 0; taskIndex < MAX_TASKS; taskIndex++) {
+    for (taskIndex = 0; taskIndex < MAX_TASKS; ++taskIndex) {
         tasks[taskIndex].counter = 0;
         tasks[taskIndex].frequency = 0;
         tasks[taskIndex].event = NULL;
     }
 }
 
-void task_load(hEvent_t hEvent) {
+bool task_load(hEvent_t hEvent, frequency_t frequency) {
+    hTask_t taskIndex;
     
+    for (taskIndex = 0; taskIndex < MAX_TASKS; ++taskIndex) {
+        if (tasks[taskIndex].event == NULL) {
+            tasks[taskIndex].event = hEvent;
+            tasks[taskIndex].event = frequency;
+            return true;
+        }
+    }
+    return false;
 }
 
-void task_unload(hEvent_t hEvent) {
+bool task_unload(hEvent_t hEvent) {
+    hTask_t taskIndex;
     
+    for (taskIndex = 0; taskIndex < MAX_TASKS; ++taskIndex) {
+        if (tasks[taskIndex].event == hEvent) {
+            tasks[taskIndex].event = NULL;
+            return true;
+        }
+    }
+    return false;
 }
 
 inline void task_manager(void) {
     hTask_t taskIndex;
     
-    for (taskIndex = 0; taskIndex < MAX_TASKS; taskIndex++) {
+    for (taskIndex = 0; taskIndex < MAX_TASKS; ++taskIndex) {
         if (tasks[taskIndex].counter >= tasks[taskIndex].frequency) {
             trigger_event(tasks[taskIndex].event);
             tasks[taskIndex].counter = 0;

@@ -26,7 +26,13 @@ extern "C" {
 
     typedef uint16_t hTask_t;
     
-    void task_load(hEvent_t hEvent);
+    typedef uint16_t frequency_t;
+    
+    void task_init(void);
+    
+    bool task_load(hEvent_t hEvent, frequency_t frequency);
+    
+    bool task_unload(hEvent_t hEvent);
 
     inline void task_manager(void);
 
