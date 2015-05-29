@@ -29,8 +29,7 @@ extern "C" {
 #include "system/gpio.h"
     
     typedef struct led_control {
-        pin_t * pin;
-        unsigned int CS_mask;
+        bit_control_t pin;
         unsigned int counter;
         unsigned int fr_blink;
         unsigned int wait;

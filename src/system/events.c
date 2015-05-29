@@ -65,7 +65,7 @@ void init_events(void) {
     event_init_done = true;
 }
 
-void register_interrupt(eventPriority priority, pin_t* pin) {
+void register_interrupt(eventPriority priority, hardware_bit_t* pin) {
     interrupts[priority].interrupt_bit.pin = pin;
     bit_setup(&interrupts[priority].interrupt_bit);
     interrupts[priority].available = true;

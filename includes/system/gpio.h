@@ -22,13 +22,13 @@
 extern "C" {
 #endif
 
-    typedef struct _pin {
+    typedef struct _hardware_bit {
         volatile unsigned int * CS_PORT;
         const unsigned int CS_pin;
-    } pin_t;
+    } hardware_bit_t;
     
     typedef struct _bit_control {
-        pin_t * pin;
+        hardware_bit_t * pin;
         unsigned int CS_mask;
     } bit_control_t;
     

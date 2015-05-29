@@ -35,7 +35,7 @@ bool first = true;
 void LED_Init(led_control_t* led_controller, size_t len) {
     int i;
     for (i = 0; i < len; ++i) {
-        led_controller[i].CS_mask = 1 << led_controller[i].pin->CS_pin;
+        bit_setup(&led_controller[i].pin);
         led_controller[i].wait = 0;
         LED_updateBlink(led_controller, i, LED_OFF);
     }
@@ -46,11 +46,11 @@ void LED_updateBlink(led_control_t* led_controller, short num, short blink) {
     switch (led_controller[num].number_blink) {
         case LED_OFF:
             //Clear bit - Set to 0
-            *(led_controller[num].pin->CS_PORT) &= ~led_controller[num].CS_mask;
+            bit_low(&led_controller[num].pin);
             break;
         case LED_ALWAYS_HIGH:
             //Set bit - Set to 1
-            *(led_controller[num].pin->CS_PORT) |= led_controller[num].CS_mask;
+            bit_high(&led_controller[num].pin);
             break;
         default:
             led_controller[num].fr_blink = SYSTEM_FREQ / (2 * led_controller[num].number_blink);
@@ -73,14 +73,14 @@ inline void LED_blinkController(led_control_t *led) {
     if (led->counter > led->wait && led->counter < SYSTEM_FREQ) {
         if (led->counter % led->fr_blink == 0) {
             //Toggle bit
-            *(led->pin->CS_PORT) ^= led->CS_mask;
+            bit_toggle(&led->pin);
         }
         led->counter++;
     } else if (led->counter >= 3 * SYSTEM_FREQ / 2) {
         led->counter = 0;
     } else {
         //Clear bit - Set to 0
-        *(led->pin->CS_PORT) &= ~led->CS_mask;
+        bit_low(&led->pin);
         led->counter++;
     }
 }
