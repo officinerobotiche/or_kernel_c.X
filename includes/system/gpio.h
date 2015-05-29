@@ -22,13 +22,25 @@
 extern "C" {
 #endif
 
-    typedef struct pin {
+    typedef struct _pin {
         volatile unsigned int * CS_PORT;
         const unsigned int CS_pin;
     } pin_t;
     
+    typedef struct _bit_control {
+        pin_t * pin;
+        unsigned int CS_mask;
+    } bit_control_t;
+    
 #define SYSTEM_FREQ 1//FRTMR1
     
+    inline void bit_setup(bit_control_t* bit_control);
+    
+    inline void bit_high(bit_control_t* bit_control);
+    
+    inline void bit_low(bit_control_t* bit_control);
+    
+    inline void bit_toggle(bit_control_t* bit_control);
 
 #ifdef	__cplusplus
 }

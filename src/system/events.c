@@ -20,6 +20,9 @@
 /******************************************************************************/
 
 #include "system/events.h"
+#include "system/gpio.h"
+
+#define LNG_EVENTPRIORITY sizeof(eventPriority)
 
 #define MAX_EVENTS 16
 #define INVALID_HANDLE 0xFFFF
@@ -30,10 +33,16 @@ typedef struct _tagEVENT {
         uint8_t priority;
 } EVENT;
 
+typedef struct _interrupt_bit {
+    bit_control_t interrupt_bit;
+    bool available;
+} interrupt_bit_t;
+
 /******************************************************************************/
 /* Global Variable Declaration                                                */
 /******************************************************************************/
 
+interrupt_bit_t interrupts[LNG_EVENTPRIORITY];
 EVENT events[MAX_EVENTS];
 bool event_init_done = false;
 
@@ -43,53 +52,54 @@ bool event_init_done = false;
 
 void init_events(void) {
     hEvent_t eventIndex;
-
+    unsigned short priorityIndex;
+    
     for (eventIndex = 0; eventIndex < MAX_EVENTS; eventIndex++) {
         events[eventIndex].event_callback = NULL;
         events[eventIndex].eventPending = false;
         events[eventIndex].priority = EVENT_PRIORITY_LOW;
     }
+    for (priorityIndex = 0; priorityIndex < LNG_EVENTPRIORITY; ++priorityIndex) {
+        interrupts[priorityIndex].available = false;
+    }
     event_init_done = true;
+}
+
+void register_interrupt(eventPriority priority, pin_t* pin) {
+    interrupts[priority].interrupt_bit.pin = pin;
+    bit_setup(&interrupts[priority].interrupt_bit);
+    interrupts[priority].available = true;
 }
 
 void trigger_event(hEvent_t hEvent) {
     if (hEvent < MAX_EVENTS) {
         if (events[hEvent].event_callback != NULL) {
             events[hEvent].eventPending = true;
-            switch (events[hEvent].priority) {
-                case EVENT_PRIORITY_LOW:
-                    //_EVENTL_TRIGGERIF = 1; // trigger the interrupt
-                    break;
-                case EVENT_PRIORITY_MEDIUM:
-                    //_EVENTM_TRIGGERIF = 1; // trigger the interrupt
-                    break;
-                case EVENT_PRIORITY_HIGH:
-                    //_EVENTH_TRIGGERIF = 1;  // trigger the interrupt
-                    break;
-            }
+            bit_high(&interrupts[events[hEvent].priority].interrupt_bit);
         }
     }
 }
 
 hEvent_t register_event(event_callback_t event_callback) {
-    return register_event_p(event_callback, EVENT_PRIORITY_MEDIUM, -1);
+    return register_event_p(event_callback, EVENT_PRIORITY_MEDIUM);
 }
 
 hEvent_t register_event_p(event_callback_t event_callback, eventPriority priority) {
     hEvent_t eventIndex;
 
-    for (eventIndex = 0; eventIndex < MAX_EVENTS; eventIndex++) {
-        if (events[eventIndex].event_callback == NULL) {
-            events[eventIndex].event_callback = event_callback;
-            events[eventIndex].priority = priority;
-            return eventIndex;
+    if (interrupts[priority].available) {
+        for (eventIndex = 0; eventIndex < MAX_EVENTS; eventIndex++) {
+            if (events[eventIndex].event_callback == NULL) {
+                events[eventIndex].event_callback = event_callback;
+                events[eventIndex].priority = priority;
+                return eventIndex;
+            }
         }
     }
     return INVALID_HANDLE;
 }
 
-/* inline */
-void event_manager(eventPriority priority) {
+inline void event_manager(eventPriority priority) {
     hEvent_t eventIndex;
     EVENT* pEvent;
 
