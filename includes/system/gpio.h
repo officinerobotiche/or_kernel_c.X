@@ -21,6 +21,8 @@
 #ifdef	__cplusplus
 extern "C" {
 #endif
+    
+#include <stdbool.h>         /* For true/false definition                     */
 
     typedef struct _hardware_bit {
         volatile unsigned int * CS_PORT;
@@ -39,6 +41,8 @@ extern "C" {
     inline void bit_low(bit_control_t* bit_control);
     
     inline void bit_toggle(bit_control_t* bit_control);
+    
+    inline bool bit_read(bit_control_t* bit_control);
 
 #ifdef	__cplusplus
 }

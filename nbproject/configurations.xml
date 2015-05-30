@@ -4,6 +4,9 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
+      <logicalFolder name="f2" displayName="data" projectFiles="true">
+        <itemPath>includes/data/data.h</itemPath>
+      </logicalFolder>
       <logicalFolder name="f1" displayName="system" projectFiles="true">
         <itemPath>includes/system/events.h</itemPath>
         <itemPath>includes/system/led.h</itemPath>
@@ -18,6 +21,9 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
+      <logicalFolder name="f2" displayName="data" projectFiles="true">
+        <itemPath>src/data/data.c</itemPath>
+      </logicalFolder>
       <logicalFolder name="f1" displayName="system" projectFiles="true">
         <itemPath>src/system/events.c</itemPath>
         <itemPath>src/system/led.c</itemPath>
@@ -31,9 +37,6 @@
       <itemPath>Makefile</itemPath>
     </logicalFolder>
   </logicalFolder>
-  <sourceRootList>
-    <Elem>src/system</Elem>
-  </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
     <conf name="default" type="3">

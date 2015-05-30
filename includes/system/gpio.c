@@ -45,3 +45,8 @@ inline void bit_low(bit_control_t* bit_control) {
 inline void bit_toggle(bit_control_t* bit_control) {
     *(bit_control->pin->CS_PORT) ^= bit_control->CS_mask;
 }
+
+inline bool bit_read(bit_control_t* bit_control) {
+    // or => ( byte >> bitnum) & 0xFE
+    return (bit_control->pin->CS_PORT & bit_control->CS_mask) >> bit_control->pin->CS_pin;
+}
