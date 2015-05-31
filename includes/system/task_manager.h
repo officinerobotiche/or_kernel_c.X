@@ -28,11 +28,16 @@ extern "C" {
     
     typedef uint16_t frequency_t;
     
+    typedef struct _task {
+        hTask_t task;
+        frequency_t frequency;
+    } task_t;
+    
     void task_init(void);
     
     bool task_load(hEvent_t hEvent, frequency_t frequency);
     
-    bool task_load_data(hEvent_t hEvent, frequency_t frequency, int argc, char *argv[]);
+    bool task_load_data(hEvent_t hEvent, frequency_t frequency, int argc, char *argv);
     
     bool task_unload(hEvent_t hEvent);
 

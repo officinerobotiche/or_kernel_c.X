@@ -40,7 +40,7 @@ typedef int16_t time_t;
 
 typedef uint16_t hEvent_t;
 
-typedef void (*event_callback_t)(int argc, char *argv[]);
+typedef void (*event_callback_t)(int argc, char *argv);
 
 //typedef void (*event_callback_t)(void);
 
@@ -50,7 +50,7 @@ void register_interrupt(eventPriority priority, hardware_bit_t* pin);
 
 void trigger_event(hEvent_t hEvent);
 
-void trigger_event_data(hEvent_t hEvent, int argc, char *argv[]);
+void trigger_event_data(hEvent_t hEvent, int argc, char *argv);
 
 hEvent_t register_event(event_callback_t event_callback);
 
