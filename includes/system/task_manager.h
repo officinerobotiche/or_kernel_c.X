@@ -32,6 +32,8 @@ extern "C" {
     
     bool task_load(hEvent_t hEvent, frequency_t frequency);
     
+    bool task_load_data(hEvent_t hEvent, frequency_t frequency, int argc, char *argv[]);
+    
     bool task_unload(hEvent_t hEvent);
 
     inline void task_manager(void);

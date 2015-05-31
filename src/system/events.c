@@ -29,6 +29,8 @@
 typedef struct _tagEVENT {
         bool eventPending;
         event_callback_t event_callback;
+        int argc;
+        char** argv;
         uint8_t priority;
         time_t time;
 } EVENT;
@@ -45,20 +47,23 @@ typedef struct _interrupt_bit {
 interrupt_bit_t interrupts[LNG_EVENTPRIORITY];
 EVENT events[MAX_EVENTS];
 bool event_init_done = false;
+REGISTER timer;
 
 /*****************************************************************************/
 /* Communication Functions                                                   */
 /*****************************************************************************/
 
-void init_events(void) {
+void init_events(REGISTER timer_register) {
     hEvent_t eventIndex;
     unsigned short priorityIndex;
-    
+    timer = timer_register;
     for (eventIndex = 0; eventIndex < MAX_EVENTS; ++eventIndex) {
         events[eventIndex].event_callback = NULL;
         events[eventIndex].eventPending = false;
         events[eventIndex].priority = EVENT_PRIORITY_LOW;
         events[eventIndex].time = 0;
+        events[eventIndex].argc = 0;
+        events[eventIndex].argv = NULL;
     }
     for (priorityIndex = 0; priorityIndex < LNG_EVENTPRIORITY; ++priorityIndex) {
         interrupts[priorityIndex].available = false;
@@ -74,9 +79,15 @@ void register_interrupt(eventPriority priority, hardware_bit_t* pin) {
 }
 
 void trigger_event(hEvent_t hEvent) {
+    trigger_event_data(hEvent, 0, NULL);
+}
+
+void trigger_event_data(hEvent_t hEvent, int argc, char *argv[]) {
     if (hEvent < MAX_EVENTS) {
         if (events[hEvent].event_callback != NULL) {
             events[hEvent].eventPending = true;
+            events[hEvent].argc = argc;
+            events[hEvent].argv = argv;
             bit_high(&interrupts[events[hEvent].priority].interrupt_bit);
         }
     }
@@ -104,6 +115,7 @@ hEvent_t register_event_p(event_callback_t event_callback, eventPriority priorit
 inline void event_manager(eventPriority priority) {
     hEvent_t eventIndex;
     EVENT* pEvent;
+    volatile time_t time;
 
     if (event_init_done) {
         for (eventIndex = 0; eventIndex < MAX_EVENTS; ++eventIndex) {
@@ -111,7 +123,9 @@ inline void event_manager(eventPriority priority) {
             if ((pEvent->eventPending == true) && (pEvent->priority == priority)) {
                 pEvent->eventPending = false;
                 if (pEvent->event_callback != NULL) {
-                    pEvent->time = pEvent->event_callback();
+                    time = *timer;                                          ///< Timing function
+                    pEvent->event_callback(pEvent->argc, &(pEvent->argv));  ///< Launch callback
+                    pEvent->time = *timer - time;                           ///< Time of execution
                 }
             }
         }

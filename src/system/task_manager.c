@@ -34,6 +34,7 @@ typedef struct _tagTASK {
 /******************************************************************************/
 
 TASK tasks[MAX_TASKS];
+unsigned short task_count = 0;
 
 /*****************************************************************************/
 /* Communication Functions                                                   */
@@ -50,12 +51,17 @@ void task_init(void) {
 }
 
 bool task_load(hEvent_t hEvent, frequency_t frequency) {
+    return task_load_data(hEvent, frequency, 0, NULL);
+}
+
+bool task_load_data(hEvent_t hEvent, frequency_t frequency, int argc, char *argv[]) {
     hTask_t taskIndex;
     
     for (taskIndex = 0; taskIndex < MAX_TASKS; ++taskIndex) {
         if (tasks[taskIndex].event == NULL) {
             tasks[taskIndex].event = hEvent;
-            tasks[taskIndex].event = frequency;
+            tasks[taskIndex].frequency = frequency;
+            task_count++;
             return true;
         }
     }
@@ -68,6 +74,7 @@ bool task_unload(hEvent_t hEvent) {
     for (taskIndex = 0; taskIndex < MAX_TASKS; ++taskIndex) {
         if (tasks[taskIndex].event == hEvent) {
             tasks[taskIndex].event = NULL;
+            task_count--;
             return true;
         }
     }
@@ -77,11 +84,13 @@ bool task_unload(hEvent_t hEvent) {
 inline void task_manager(void) {
     hTask_t taskIndex;
     
-    for (taskIndex = 0; taskIndex < MAX_TASKS; ++taskIndex) {
-        if (tasks[taskIndex].counter >= tasks[taskIndex].frequency) {
-            trigger_event(tasks[taskIndex].event);
-            tasks[taskIndex].counter = 0;
+    if(task_count > 0) {
+        for (taskIndex = 0; taskIndex < MAX_TASKS; ++taskIndex) {
+            if (tasks[taskIndex].counter >= tasks[taskIndex].frequency) {
+                trigger_event(tasks[taskIndex].event);
+                tasks[taskIndex].counter = 0;
+            }
+            tasks[taskIndex].counter++;
         }
-        tasks[taskIndex].counter++;
     }
 }

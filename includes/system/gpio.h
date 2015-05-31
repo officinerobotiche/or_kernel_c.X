@@ -24,8 +24,10 @@ extern "C" {
     
 #include <stdbool.h>         /* For true/false definition                     */
 
+    typedef volatile unsigned int * REGISTER;
+    
     typedef struct _hardware_bit {
-        volatile unsigned int * CS_PORT;
+        REGISTER CS_PORT;
         const unsigned int CS_pin;
     } hardware_bit_t;
     

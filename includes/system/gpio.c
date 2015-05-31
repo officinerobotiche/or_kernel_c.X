@@ -48,5 +48,5 @@ inline void bit_toggle(bit_control_t* bit_control) {
 
 inline bool bit_read(bit_control_t* bit_control) {
     // or => ( byte >> bitnum) & 0xFE
-    return (bit_control->pin->CS_PORT & bit_control->CS_mask) >> bit_control->pin->CS_pin;
+    return ((unsigned int) bit_control->pin->CS_PORT & bit_control->CS_mask) >> bit_control->pin->CS_pin;
 }
