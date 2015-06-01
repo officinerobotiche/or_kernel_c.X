@@ -42,9 +42,7 @@ typedef uint16_t hEvent_t;
 
 typedef void (*event_callback_t)(int argc, char *argv);
 
-//typedef void (*event_callback_t)(void);
-
-void init_events(REGISTER timer_register);
+void init_events(REGISTER timer_register, REGISTER pr_timer);
 
 void register_interrupt(eventPriority priority, hardware_bit_t* pin);
 
@@ -55,6 +53,8 @@ void trigger_event_data(hEvent_t hEvent, int argc, char *argv);
 hEvent_t register_event(event_callback_t event_callback);
 
 hEvent_t register_event_p(event_callback_t event_callback, eventPriority priority);
+
+bool unregister_event(hEvent_t eventIndex);
 
 inline void event_manager(eventPriority priority);
 

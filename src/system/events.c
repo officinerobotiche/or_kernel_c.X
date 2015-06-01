@@ -26,9 +26,16 @@
 
 #define MAX_EVENTS 16
 
+typedef enum _event_type {
+    FALSE = 0,
+    WORKING,
+    TRUE,
+} EVENT_TYPE;
+
 typedef struct _tagEVENT {
-        bool eventPending;
+        EVENT_TYPE eventPending;
         event_callback_t event_callback;
+        uint16_t overTmr;
         int argc;
         char* argv;
         uint8_t priority;
@@ -46,29 +53,37 @@ typedef struct _interrupt_bit {
 
 interrupt_bit_t interrupts[LNG_EVENTPRIORITY];
 EVENT events[MAX_EVENTS];
-bool event_init_done = false;
+unsigned short event_counter = 0;
 REGISTER timer;
+REGISTER PRTIMER;
 
 /*****************************************************************************/
 /* Communication Functions                                                   */
+
 /*****************************************************************************/
 
-void init_events(REGISTER timer_register) {
+void reset_event(hEvent_t eventIndex) {
+    events[eventIndex].event_callback = NULL;
+    events[eventIndex].eventPending = FALSE;
+    events[eventIndex].priority = EVENT_PRIORITY_LOW;
+    events[eventIndex].overTmr = 0;
+    events[eventIndex].time = 0;
+    events[eventIndex].argc = 0;
+    events[eventIndex].argv = NULL;
+}
+
+void init_events(REGISTER timer_register, REGISTER pr_timer) {
     hEvent_t eventIndex;
     unsigned short priorityIndex;
     timer = timer_register;
+    PRTIMER = pr_timer;
     for (eventIndex = 0; eventIndex < MAX_EVENTS; ++eventIndex) {
-        events[eventIndex].event_callback = NULL;
-        events[eventIndex].eventPending = false;
-        events[eventIndex].priority = EVENT_PRIORITY_LOW;
-        events[eventIndex].time = 0;
-        events[eventIndex].argc = 0;
-        events[eventIndex].argv = NULL;
+        reset_event(eventIndex);
     }
     for (priorityIndex = 0; priorityIndex < LNG_EVENTPRIORITY; ++priorityIndex) {
         interrupts[priorityIndex].available = false;
     }
-    event_init_done = true;
+    event_counter = 0;
 }
 
 void register_interrupt(eventPriority priority, hardware_bit_t* pin) {
@@ -76,6 +91,7 @@ void register_interrupt(eventPriority priority, hardware_bit_t* pin) {
     bit_setup(&interrupts[priority].interrupt_bit);
     bit_low(&interrupts[priority].interrupt_bit);
     interrupts[priority].available = true;
+    event_counter++;
 }
 
 void trigger_event(hEvent_t hEvent) {
@@ -85,7 +101,7 @@ void trigger_event(hEvent_t hEvent) {
 void trigger_event_data(hEvent_t hEvent, int argc, char *argv) {
     if (hEvent < MAX_EVENTS) {
         if (events[hEvent].event_callback != NULL) {
-            events[hEvent].eventPending = true;
+            events[hEvent].eventPending = TRUE;
             events[hEvent].argc = argc;
             events[hEvent].argv = argv;
             bit_high(&interrupts[events[hEvent].priority].interrupt_bit);
@@ -112,26 +128,41 @@ hEvent_t register_event_p(event_callback_t event_callback, eventPriority priorit
     return INVALID_HANDLE;
 }
 
-inline void event_manager(eventPriority priority) {
-    hEvent_t eventIndex;
-    EVENT* pEvent;
-    volatile time_t time;
+bool unregister_event(hEvent_t eventIndex) {
+    if (event_counter <= 0 && eventIndex != INVALID_HANDLE) {
+        reset_event(eventIndex);
+        event_counter--;
+        return true;
+    } else
+        return false;
+}
 
-    if (event_init_done) {
+inline void event_manager(eventPriority priority) {
+
+    if (event_counter > 0) {
+        hEvent_t eventIndex;
+        EVENT* pEvent;
         for (eventIndex = 0; eventIndex < MAX_EVENTS; ++eventIndex) {
             pEvent = &events[eventIndex];
-            if ((pEvent->eventPending == true) && (pEvent->priority == priority)) {
-                pEvent->eventPending = false;
+            if ((pEvent->eventPending == TRUE) && (pEvent->priority == priority)) {
                 if (pEvent->event_callback != NULL) {
-                    time = *timer;                                          ///< Timing function
-                    pEvent->event_callback(pEvent->argc, pEvent->argv);     ///< Launch callback
-                    pEvent->time = *timer - time;                           ///< Time of execution
+                    volatile time_t time;
+                    pEvent->eventPending = WORKING;
+                    pEvent->overTmr = 0;                                            ///< Reset timer
+                    time = *timer;                                                  ///< Timing function
+                    pEvent->event_callback(pEvent->argc, pEvent->argv);             ///< Launch callback
+                    pEvent->eventPending = FALSE;                                   ///< Complete event
+                    pEvent->time = pEvent->overTmr * (*PRTIMER) + (*timer) - time;  ///< Time of execution
                 }
+            } else if(pEvent->eventPending == WORKING) {
+                pEvent->overTmr++;
             }
         }
     }
 }
 
 inline time_t get_time(hEvent_t hEvent) {
-    return events[hEvent].time;
+    if (hEvent != INVALID_HANDLE) {
+        return events[hEvent].time;
+    } else return 0;
 }
