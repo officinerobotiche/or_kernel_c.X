@@ -49,6 +49,8 @@ extern "C" {
     bool change_frequency(hTask_t hTask, frequency_t frequency);
     
     bool task_unload(hTask_t hTask);
+    
+    string_data_t get_task_name(hTask_t taskIndex);
 
     inline void task_manager(void);
 

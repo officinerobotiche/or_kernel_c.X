@@ -107,6 +107,10 @@ bool task_unload(hTask_t hTask) {
     return false;
 }
 
+string_data_t get_task_name(hTask_t taskIndex) {
+    return get_event_name(tasks[taskIndex].event);
+}
+
 inline void task_manager(void) {
     if(task_count > 0) {
         hTask_t taskIndex;

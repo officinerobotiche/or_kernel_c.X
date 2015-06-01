@@ -40,6 +40,7 @@ typedef struct _tagEVENT {
         char* argv;
         uint8_t priority;
         time_t time;
+        string_data_t* name;
 } EVENT;
 
 typedef struct _interrupt_bit {
@@ -70,6 +71,7 @@ void reset_event(hEvent_t eventIndex) {
     events[eventIndex].time = 0;
     events[eventIndex].argc = 0;
     events[eventIndex].argv = NULL;
+    events[eventIndex].name = NULL;
 }
 
 void init_events(REGISTER timer_register, REGISTER pr_timer) {
@@ -109,11 +111,11 @@ void trigger_event_data(hEvent_t hEvent, int argc, char *argv) {
     }
 }
 
-hEvent_t register_event(event_callback_t event_callback) {
-    return register_event_p(event_callback, EVENT_PRIORITY_MEDIUM);
+hEvent_t register_event(event_callback_t event_callback, string_data_t* name) {
+    return register_event_p(event_callback, name, EVENT_PRIORITY_MEDIUM);
 }
 
-hEvent_t register_event_p(event_callback_t event_callback, eventPriority priority) {
+hEvent_t register_event_p(event_callback_t event_callback, string_data_t* name, eventPriority priority) {
     hEvent_t eventIndex;
 
     if (interrupts[priority].available) {
@@ -121,6 +123,7 @@ hEvent_t register_event_p(event_callback_t event_callback, eventPriority priorit
             if (events[eventIndex].event_callback == NULL) {
                 events[eventIndex].event_callback = event_callback;
                 events[eventIndex].priority = priority;
+                events[eventIndex].name = name;
                 return eventIndex;
             }
         }
@@ -135,6 +138,10 @@ bool unregister_event(hEvent_t eventIndex) {
         return true;
     } else
         return false;
+}
+
+string_data_t get_event_name(hEvent_t eventIndex) {
+    return *events[eventIndex].name;
 }
 
 inline void event_manager(eventPriority priority) {

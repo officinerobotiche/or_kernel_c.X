@@ -24,9 +24,9 @@ extern "C" {
     
 #include <stdint.h>        /* Includes uint16_t definition                    */
 #include <stdbool.h>       /* Includes true/false definition                  */
-#include <string.h>
     
-    #include <system/gpio.h>
+#include <system/gpio.h>
+#include "data/data.h"
 
     #define INVALID_HANDLE 0xFFFF
 
@@ -50,9 +50,11 @@ void trigger_event(hEvent_t hEvent);
 
 void trigger_event_data(hEvent_t hEvent, int argc, char *argv);
 
-hEvent_t register_event(event_callback_t event_callback);
+hEvent_t register_event(event_callback_t event_callback, string_data_t* name);
 
-hEvent_t register_event_p(event_callback_t event_callback, eventPriority priority);
+hEvent_t register_event_p(event_callback_t event_callback, string_data_t* name, eventPriority priority);
+
+string_data_t get_event_name(hEvent_t eventIndex);
 
 bool unregister_event(hEvent_t eventIndex);
 
