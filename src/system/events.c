@@ -20,7 +20,7 @@
 /******************************************************************************/
 
 #include "system/events.h"
-#include "system/gpio.h"
+#include "peripherals/gpio.h"
 
 #define LNG_EVENTPRIORITY sizeof(eventPriority)
 

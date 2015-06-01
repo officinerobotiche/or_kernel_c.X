@@ -25,7 +25,7 @@ extern "C" {
 #include <stdint.h>        /* Includes uint16_t definition                    */
 #include <stdbool.h>       /* Includes true/false definition                  */
     
-#include <system/gpio.h>
+#include <peripherals/gpio.h>
 #include "data/data.h"
 
     #define INVALID_HANDLE 0xFFFF

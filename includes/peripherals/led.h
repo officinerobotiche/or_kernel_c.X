@@ -26,7 +26,7 @@ extern "C" {
 #include <stdbool.h>       /* Includes true/false definition                  */
 #include <string.h>
     
-#include "system/gpio.h"
+#include "peripherals/gpio.h"
     
     /**
      * Struct to control blink led
