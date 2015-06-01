@@ -28,6 +28,11 @@ extern "C" {
     
     typedef uint16_t frequency_t;
     
+    typedef enum _task_status {
+        STOP,
+        RUN,
+    } task_status_t;
+    
     typedef struct _task {
         hTask_t task;
         frequency_t frequency;
@@ -35,11 +40,15 @@ extern "C" {
     
     void task_init(void);
     
-    bool task_load(hEvent_t hEvent, frequency_t frequency);
+    hTask_t task_load(hEvent_t hEvent, frequency_t frequency);
     
-    bool task_load_data(hEvent_t hEvent, frequency_t frequency, int argc, char *argv);
+    hTask_t task_load_data(hEvent_t hEvent, frequency_t frequency, int argc, char *argv);
     
-    bool task_unload(hEvent_t hEvent);
+    bool task_status(hTask_t hTask, task_status_t run);
+    
+    bool change_frequency(hTask_t hTask, frequency_t frequency);
+    
+    bool task_unload(hTask_t hTask);
 
     inline void task_manager(void);
 
