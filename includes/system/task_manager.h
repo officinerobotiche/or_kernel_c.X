@@ -42,7 +42,7 @@ extern "C" {
     
     hTask_t task_load(hEvent_t hEvent, frequency_t frequency);
     
-    hTask_t task_load_data(hEvent_t hEvent, frequency_t frequency, int argc, char *argv);
+    hTask_t task_load_data(hEvent_t hEvent, frequency_t frequency, int argc, char argv);
     
     bool task_status(hTask_t hTask, task_status_t run);
     

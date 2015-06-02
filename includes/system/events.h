@@ -31,16 +31,17 @@ extern "C" {
     #define INVALID_HANDLE 0xFFFF
 
 typedef enum _eventP {
-        EVENT_PRIORITY_LOW = 0,
-        EVENT_PRIORITY_MEDIUM,
-        EVENT_PRIORITY_HIGH,
+    EVENT_PRIORITY_LOW = 0,
+    EVENT_PRIORITY_MEDIUM,
+    EVENT_PRIORITY_HIGH,
+    EVENT_PRIORITY_VERY_LOW,
 } eventPriority;
 
 typedef int16_t time_t;
 
 typedef uint16_t hEvent_t;
 
-typedef void (*event_callback_t)(int argc, char *argv);
+typedef void (*event_callback_t)(int argc, char* argv);
 
 void init_events(REGISTER timer_register, REGISTER pr_timer);
 

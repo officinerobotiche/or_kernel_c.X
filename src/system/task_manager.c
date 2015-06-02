@@ -29,7 +29,7 @@ typedef struct _tagTASK {
     uint16_t counter;
     frequency_t frequency;
     int argc;
-    char *argv;
+    char argv;
 } TASK;
 
 /******************************************************************************/
@@ -60,7 +60,7 @@ hTask_t task_load(hEvent_t hEvent, frequency_t frequency) {
     return task_load_data(hEvent, frequency, 0, NULL);
 }
 
-hTask_t task_load_data(hEvent_t hEvent, frequency_t frequency, int argc, char *argv) {
+hTask_t task_load_data(hEvent_t hEvent, frequency_t frequency, int argc, char argv) {
     hTask_t taskIndex;
     
     for (taskIndex = 0; taskIndex < MAX_TASKS; ++taskIndex) {
@@ -118,7 +118,7 @@ inline void task_manager(void) {
         for (taskIndex = 0; taskIndex < MAX_TASKS; ++taskIndex) {
             if(tasks[taskIndex].run == RUN) {
                 if (tasks[taskIndex].counter >= tasks[taskIndex].frequency) {
-                    trigger_event_data(tasks[taskIndex].event, tasks[taskIndex].argc, tasks[taskIndex].argv);
+                    trigger_event_data(tasks[taskIndex].event, tasks[taskIndex].argc, &tasks[taskIndex].argv);
                     tasks[taskIndex].counter = 0;
                 }
                 tasks[taskIndex].counter++;

@@ -62,7 +62,7 @@ extern "C" {
      * @param led_controller
      * @param len
      */
-    void LED_Init(uint16_t* freq, led_control_t* led_controller, size_t len);
+    void LED_Init(uint16_t freq, led_control_t* led_controller, size_t len);
     
     /**
      * Update frequency or type of blink
