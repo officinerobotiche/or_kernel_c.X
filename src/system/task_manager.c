@@ -111,6 +111,10 @@ string_data_t get_task_name(hTask_t taskIndex) {
     return get_event_name(tasks[taskIndex].event);
 }
 
+unsigned short get_task_number(void) {
+    return task_count;
+}
+
 inline void task_manager(void) {
     if(task_count > 0) {
         hTask_t taskIndex;

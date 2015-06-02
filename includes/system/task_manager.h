@@ -51,6 +51,8 @@ extern "C" {
     bool task_unload(hTask_t hTask);
     
     string_data_t get_task_name(hTask_t taskIndex);
+    
+    unsigned short get_task_number(void);
 
     inline void task_manager(void);
 
