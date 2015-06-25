@@ -24,24 +24,58 @@ extern "C" {
 
     #include "system/events.h"
 
+    /**
+     * Definition of Task
+     */
     typedef uint16_t hTask_t;
     
+    /**
+     * Definition of frequency
+     */
     typedef uint16_t frequency_t;
     
+    /**
+     * Definition status task:
+     * * STOP - The task is loaded, but does not work
+     * * RUN  - The task is loaded and working
+     */
     typedef enum _task_status {
         STOP,
         RUN,
     } task_status_t;
     
+    /**
+     * Structure definition of task:
+     * * task number
+     * * frequency of this task
+     */
     typedef struct _task {
         hTask_t task;
         frequency_t frequency;
     } task_t;
     
+    /**
+     * Initialization task manager
+     */
     void task_init(void);
     
+    /**
+     * Load a task. To launch a task you must load before an event and set in
+     * a task manager.
+     * @param hEvent 
+     * @param frequency
+     * @return 
+     */
     hTask_t task_load(hEvent_t hEvent, frequency_t frequency);
     
+    /**
+     * 
+     * @param hEvent
+     * @param frequency
+     * @param argc
+     * @param argv
+     * @return 
+     */
     hTask_t task_load_data(hEvent_t hEvent, frequency_t frequency, int argc, char argv);
     
     bool task_status(hTask_t hTask, task_status_t run);
