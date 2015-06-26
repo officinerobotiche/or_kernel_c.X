@@ -26,6 +26,15 @@
 
 #include "peripherals/i2c.h"
 
+#define MASK_I2CCON_EN           BIT_MASK(15)
+#define MASK_I2CCON_ACKDT        BIT_MASK(5)
+#define MASK_I2CCON_ACKEN        BIT_MASK(4)
+#define MASK_I2CCON_RCEN         BIT_MASK(3)
+#define MASK_I2CCON_PEN          BIT_MASK(2)
+#define MASK_I2CCON_SEN          BIT_MASK(0)
+
+#define MASK_I2CSTAT_ACKSTAT     BIT_MASK(15)
+
 /******************************************************************************/
 /* Global Variable Declaration                                                */
 /******************************************************************************/
@@ -101,20 +110,16 @@ unsigned int I2C_command_data_size = 0; // command data size
 unsigned char* pI2CBuffer = NULL; // pointer to buffer
 unsigned char* pI2CcommandBuffer = NULL; // pointer to receive  buffer
 
+hardware_bit_t I2C_INTERRUPT;
+REGISTER I2C_CON;
+REGISTER I2C_STAT;
+REGISTER I2C_TRN;
+REGISTER I2C_RCV;
+
 /******************************************************************************/
 /* Parsing functions                                                          */
 /******************************************************************************/
-
-/**
-    I2C1BRG = I2CBRGVAL;
-    _I2CEN = 1; // enable I2C
-
-    _MI2C1IP = 5; // I2C at priority 5
-    _MI2C1IF = 0; // clear the I2C master interrupt
-    _MI2C1IE = 1; // enable the interrupt
- */
-
-void I2C_Init(void) {
+void I2C_Init(hardware_bit_t* i2c_interrupt, REGISTER i2c_con, REGISTER i2c_stat, REGISTER i2c_trn, REGISTER i2c_rcv) {
 
     int queueIndex;
 
@@ -128,10 +133,25 @@ void I2C_Init(void) {
         i2c_queue[queueIndex].Size = 0;
         i2c_queue[queueIndex].pCallback = NULL;
     }
+    /*
+    I2C1BRG = I2CBRGVAL;
+    _I2CEN = 1; // enable I2C
+
+    _MI2C1IP = 5; // I2C at priority 5
+    _MI2C1IF = 0; // clear the I2C master interrupt
+    _MI2C1IE = 1; // enable the interrupt
+    */
     
+    /// Set low interrupt
+    bit_low(&I2C_INTERRUPT);
+    
+    I2C_CON = i2c_con;
+    I2C_STAT = i2c_stat;
+    I2C_TRN = i2c_trn;
+    I2C_RCV = i2c_rcv;
     /// Register event
     I2C_service_handle = register_event_p(&serviceI2C, &_MODULE_I2C, EVENT_PRIORITY_LOW);
-
+    /// Set available
     I2C_Busy = false;
 
     return;
@@ -139,8 +159,9 @@ void I2C_Init(void) {
 
 void I2C_reset(void) {
     I2C_state = &I2C_idle; // disable the response to any more interrupts
+    /*
     I2C_ERROR = I2CSTAT; // record the error for diagnostics
-
+    
     _I2CEN = 0; // turn off the I2C
     _MI2C1IF = 0; // clear the I2C master interrupt
     _MI2C1IE = 0; // disable the interrupt
@@ -155,6 +176,7 @@ void I2C_reset(void) {
     I2CCON = 0x1000;
     I2CSTAT = 0x0000;
     I2C_Init();
+    */
     return;
 }
 
@@ -172,15 +194,16 @@ bool I2C_checkACK(unsigned int command, I2C_callbackFunc pCallback) {
 
     // Set ISR callback and trigger the ISR
     I2C_state = &I2C_startWrite;
-    _MI2C1IF = 1;
+    /// Set high interrupt
+    bit_high(&I2C_INTERRUPT);
     return true;
 }
 
 bool I2C_Write(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, I2C_callbackFunc pCallback) {
-    return I2C_Write(command, pcommandData, commandDataSize, NULL, 0, pCallback);
+    return I2C_Write_data(command, pcommandData, commandDataSize, NULL, 0, pCallback);
 }
 
-bool I2C_Write(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, unsigned char* ptxData, unsigned int txSize, I2C_callbackFunc pCallback) {
+bool I2C_Write_data(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, unsigned char* ptxData, unsigned int txSize, I2C_callbackFunc pCallback) {
     int queueIndex;
 
     for (queueIndex = 0; queueIndex < I2C_QUEUE_DEPTH; queueIndex++) {
@@ -251,7 +274,8 @@ bool I2C_serve_queue(void) {
 
             // Set ISR callback and trigger the ISR
             I2C_state = &I2C_startWrite;
-            _MI2C1IF = 1;
+            /// Set high interrupt
+            bit_high(&I2C_INTERRUPT);
             return true;
 
         }
@@ -259,10 +283,9 @@ bool I2C_serve_queue(void) {
     return false;
 }
 
-/* inline */
-bool I2C_CheckAvailable(void) {
-    if (_I2CEN == 0) return false;
-    if ((I2CSTAT & 0b0000010011000000) != 0) return false;
+inline bool I2C_CheckAvailable(void) {
+    if (REGISTER_MASK_READ(I2C_CON, MASK_I2CCON_EN) == 0) return false;
+    if (REGISTER_MASK_READ(I2C_STAT, 0b0000010011000000) != 0) return false;
 
     if (I2C_Busy == true) return false;
     I2C_Busy = true;
@@ -274,18 +297,18 @@ void I2C_startWrite(void) {
     I2C_Index = 0; // Reset index into buffer
 
     I2C_state = &I2C_writeCommand;
-    I2CCONbits.SEN = 1;
+    REGISTER_MASK_SET_HIGH(I2C_CON, MASK_I2CCON_SEN);
     return;
 }
 
 void I2C_writeCommand(void) {
-    I2CTRN = I2C_CommandByte & 0xFE;
+    *(I2C_TRN) = I2C_CommandByte & 0xFE;
     I2C_state = &I2C_writeCommandData;
     return;
 }
 
 void I2C_writeCommandData(void) {
-    if (I2CSTATbits.ACKSTAT == 1) // Device not responding
+    if (REGISTER_MASK_READ(I2C_STAT, MASK_I2CSTAT_ACKSTAT) == 1) // Device not responding
     {
         I2C_Failed();
         return;
@@ -297,7 +320,7 @@ void I2C_writeCommandData(void) {
         return;
     }
 
-    I2CTRN = pI2CcommandBuffer[I2C_Index++];
+    *(I2C_TRN) = pI2CcommandBuffer[I2C_Index++];
 
     if (I2C_Index >= I2C_command_data_size) {
         I2C_Index = 0; // Reset index into the buffer
@@ -315,51 +338,50 @@ void I2C_writeCommandData(void) {
 void I2C_readStart(void) {
     I2C_Index = 0; // Reset index into buffer
     I2C_state = &I2C_readCommand;
-    I2CCONbits.SEN = 1;
+    REGISTER_MASK_SET_HIGH(I2C_CON, MASK_I2CCON_SEN);
 }
 
 void I2C_readCommand(void) {
     I2C_state = &I2C_recen;
-    I2CTRN = I2C_CommandByte | 0x01;
+    *(I2C_TRN) = I2C_CommandByte | 0x01;
 }
 
 void I2C_recen(void) {
-    if (I2CSTATbits.ACKSTAT == 1) // Device not responding
+    if (REGISTER_MASK_READ(I2C_STAT, MASK_I2CSTAT_ACKSTAT) == 1) // Device not responding
     {
         I2C_Failed();
         return;
     } else {
         I2C_state = &I2C_recstore;
-        I2CCONbits.RCEN = 1;
+        REGISTER_MASK_SET_HIGH(I2C_CON, MASK_I2CCON_RCEN);
     }
     return;
 }
 
 void I2C_recstore(void) {
     if(pI2CBuffer != NULL) {
-        pI2CBuffer[I2C_Index++] = I2CRCV;
+        pI2CBuffer[I2C_Index++] = *I2C_RCV;
         if (I2C_Index >= I2C_data_size.rx) {
             I2C_state = &I2C_stopRead;
-            I2CCONbits.ACKDT = 1;
+            REGISTER_MASK_SET_HIGH(I2C_CON, MASK_I2CCON_ACKDT);
         } else {
             I2C_state = &I2C_rerecen;
-            I2CCONbits.ACKDT = 0;
+            REGISTER_MASK_SET_LOW(I2C_CON, MASK_I2CCON_ACKDT);
         }
     }
-    
-    I2CCONbits.ACKEN = 1; 
+    REGISTER_MASK_SET_HIGH(I2C_CON, MASK_I2CCON_ACKEN);
     return;
 }
 
 void I2C_stopRead(void) {
-    I2CCONbits.PEN = 1;
+    REGISTER_MASK_SET_HIGH(I2C_CON, MASK_I2CCON_PEN);
     I2C_state = &I2C_doneRead;
     return;
 }
 
 void I2C_rerecen(void) {
     I2C_state = &I2C_recstore;
-    I2CCONbits.RCEN = 1;
+    REGISTER_MASK_SET_HIGH(I2C_CON, MASK_I2CCON_RCEN);
     return;
 }
 
@@ -372,7 +394,7 @@ void I2C_doneRead(void) {
 /* WRITE FUNCTIONS */
 
 void I2C_writeData(void) {
-    if (I2CSTATbits.ACKSTAT == 1) // Device not responding
+    if (REGISTER_MASK_READ(I2C_STAT, MASK_I2CSTAT_ACKSTAT) == 1) // Device not responding
     {
         I2C_Failed();
         return;
@@ -383,7 +405,7 @@ void I2C_writeData(void) {
         return;
     }
     if (pI2CBuffer != NULL) {
-        I2CTRN = pI2CBuffer[I2C_Index++];
+        *(I2C_TRN) = pI2CBuffer[I2C_Index++];
         
         if (I2C_Index >= I2C_data_size.tx) {
             if (I2C_data_size.rx == 0)
@@ -397,7 +419,7 @@ void I2C_writeData(void) {
 
 void I2C_writeStop(void) {
     I2C_state = &I2C_doneWrite;
-    I2CCONbits.PEN = 1;
+    REGISTER_MASK_SET_HIGH(I2C_CON, MASK_I2CCON_PEN);
     return;
 }
 
@@ -417,17 +439,17 @@ void I2C_idle(void) {
 
 void I2C_Failed(void) {
     I2C_state = &I2C_idle;
-    I2CCONbits.PEN = 1;
+    REGISTER_MASK_SET_HIGH(I2C_CON, MASK_I2CCON_PEN);
     I2C_Busy = false;
     if (pI2C_callback != NULL)
         pI2C_callback(false);
 }
 
 bool I2C_Normal(void) {
-    if ((I2CSTAT & 0b0000010011000000) == 0)
+    if (REGISTER_MASK_READ(I2C_STAT, 0b0000010011000000) == 0)
         return true;
     else {
-        I2C_ERROR = I2CSTAT;
+        I2C_ERROR = ((unsigned int) I2C_STAT);
         return false;
     }
 }
@@ -437,17 +459,15 @@ void I2C_trigger_service(void) {
 }
 
 void serviceI2C(int argc, char* argv) {
-    if (_I2CEN == 0) ///< I2C is off
+    if (REGISTER_MASK_READ(I2C_CON, MASK_I2CCON_EN) == 0) ///< I2C is off
     {
         I2C_state = &I2C_idle; ///< disable response to any interrupts
-        I2C_Init(); //< turn the I2C back on
+        I2C_Init(&I2C_INTERRUPT, I2C_CON, I2C_STAT, I2C_TRN, I2C_RCV); //< turn the I2C back on
         ///< Put something here to reset state machine.  Make sure attached services exit nicely.
     }
 }
 
-void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C1Interrupt(void) {
-    _MI2C1IF = 0; // clear the interrupt
+inline void I2C_manager (void) {
     (* I2C_state) (); // execute the service routine
-
     return;
 }

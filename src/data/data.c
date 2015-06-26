@@ -29,7 +29,7 @@
 /* User Functions                                                            */
 /*****************************************************************************/
 
-void inline protectedMemcpy(bit_control_t* reg, void *destination, const void *source, size_t num) {
+void inline protectedMemcpy(hardware_bit_t* reg, void *destination, const void *source, size_t num) {
     if (bit_read(reg)) {
         bit_low(reg);
         memcpy(destination, source, num);

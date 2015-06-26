@@ -44,7 +44,7 @@ typedef struct _tagEVENT {
 } EVENT;
 
 typedef struct _interrupt_bit {
-    bit_control_t interrupt_bit;
+    hardware_bit_t* interrupt_bit;
     bool available;
 } interrupt_bit_t;
 
@@ -89,9 +89,9 @@ void init_events(REGISTER timer_register, REGISTER pr_timer) {
 }
 
 void register_interrupt(eventPriority priority, hardware_bit_t* pin) {
-    interrupts[priority].interrupt_bit.pin = pin;
-    bit_setup(&interrupts[priority].interrupt_bit);
-    bit_low(&interrupts[priority].interrupt_bit);
+    interrupts[priority].interrupt_bit = pin;
+    //bit_setup(&interrupts[priority].interrupt_bit);
+    bit_low(interrupts[priority].interrupt_bit);
     interrupts[priority].available = true;
     event_counter++;
 }
@@ -106,7 +106,7 @@ void trigger_event_data(hEvent_t hEvent, int argc, char *argv) {
             events[hEvent].eventPending = TRUE;
             events[hEvent].argc = argc;
             events[hEvent].argv = argv;
-            bit_high(&interrupts[events[hEvent].priority].interrupt_bit);
+            bit_high(interrupts[events[hEvent].priority].interrupt_bit);
         }
     }
 }

@@ -29,24 +29,20 @@
 /*****************************************************************************/
 /* Communication Functions                                                   */
 /*****************************************************************************/
-
-inline void bit_setup(bit_control_t* bit_control) {
-    bit_control->CS_mask = 1 << bit_control->pin->CS_pin;
+inline void bit_high(hardware_bit_t* bit_control) {
+    REGISTER_MASK_SET_HIGH(bit_control->CS_PORT, bit_control->CS_mask);
 }
 
-inline void bit_high(bit_control_t* bit_control) {
-    *(bit_control->pin->CS_PORT) |= bit_control->CS_mask;
+inline void bit_low(hardware_bit_t* bit_control) {
+    REGISTER_MASK_SET_LOW(bit_control->CS_PORT, bit_control->CS_mask);
 }
 
-inline void bit_low(bit_control_t* bit_control) {
-    *(bit_control->pin->CS_PORT) &= ~bit_control->CS_mask;
+inline void bit_toggle(hardware_bit_t* bit_control) {
+    REGISTER_MASK_TOGGLE(bit_control->CS_PORT, bit_control->CS_mask);
 }
 
-inline void bit_toggle(bit_control_t* bit_control) {
-    *(bit_control->pin->CS_PORT) ^= bit_control->CS_mask;
-}
-
-inline bool bit_read(bit_control_t* bit_control) {
-    // or => ( byte >> bitnum) & 0xFE
-    return ((unsigned int) bit_control->pin->CS_PORT & bit_control->CS_mask) >> bit_control->pin->CS_pin;
+inline bool bit_read(hardware_bit_t* bit_control) {
+    // 1. (byte & mask) >> num
+    // 2. ( byte >> bitnum) & 0xFE
+    return REGISTER_MASK_READ(bit_control->CS_PORT, bit_control->CS_mask);
 }

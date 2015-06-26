@@ -24,27 +24,27 @@ extern "C" {
     
 #include <stdbool.h>         /* For true/false definition                     */
 
+#define BIT_MASK(x)                       (1 << (x))
+#define REGISTER_INIT(reg, x)             {&(reg), BIT_MASK(x)}
+#define REGISTER_MASK_SET_HIGH(reg, mask) (*(reg) |= (mask))
+#define REGISTER_MASK_SET_LOW(reg, mask)  (*(reg) &= ~(mask))
+#define REGISTER_MASK_TOGGLE(reg, mask)   (*(reg) ^= (mask))
+#define REGISTER_MASK_READ(reg, mask)     ((*(reg) & (mask)) == (mask))
+    
     typedef volatile unsigned int * REGISTER;
     
     typedef struct _hardware_bit {
         REGISTER CS_PORT;
-        const unsigned int CS_pin;
+        unsigned int CS_mask;
     } hardware_bit_t;
     
-    typedef struct _bit_control {
-        hardware_bit_t * pin;
-        unsigned int CS_mask;
-    } bit_control_t;
+    inline void bit_high(hardware_bit_t* bit_control);
     
-    inline void bit_setup(bit_control_t* bit_control);
+    inline void bit_low(hardware_bit_t* bit_control);
     
-    inline void bit_high(bit_control_t* bit_control);
+    inline void bit_toggle(hardware_bit_t* bit_control);
     
-    inline void bit_low(bit_control_t* bit_control);
-    
-    inline void bit_toggle(bit_control_t* bit_control);
-    
-    inline bool bit_read(bit_control_t* bit_control);
+    inline bool bit_read(hardware_bit_t* bit_control);
 
 #ifdef	__cplusplus
 }

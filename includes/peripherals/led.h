@@ -39,7 +39,7 @@ extern "C" {
      */
     
     typedef struct led_control {
-        bit_control_t pin;
+        hardware_bit_t* pin;
         unsigned int counter;
         unsigned int fr_blink;
         unsigned int wait;

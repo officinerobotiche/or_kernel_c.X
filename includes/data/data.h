@@ -45,7 +45,7 @@ extern "C" {
      * @param source data
      * @param num size of data
      */
-    void protectedMemcpy(bit_control_t* reg, void *destination, const void *source, size_t num);
+    void protectedMemcpy(hardware_bit_t* reg, void *destination, const void *source, size_t num);
     
 
 #ifdef	__cplusplus
