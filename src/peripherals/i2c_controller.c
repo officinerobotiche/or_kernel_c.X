@@ -24,7 +24,7 @@
 
 #include <stdbool.h>       /* Includes true/false definition */
 
-#include "peripherals/i2c.h"
+#include "peripherals/i2c_controller.h"
 
 #define MASK_I2CCON_EN           BIT_MASK(15)
 #define MASK_I2CCON_ACKDT        BIT_MASK(5)
@@ -39,6 +39,8 @@
 /* Global Variable Declaration                                                */
 /******************************************************************************/
 
+void I2C_load(void);
+void I2C_reset(void);
 bool I2C_serve_queue(void);
 inline bool I2C_CheckAvailable(void);
 void I2C_startWrite(void);
@@ -110,17 +112,35 @@ unsigned int I2C_command_data_size = 0; // command data size
 unsigned char* pI2CBuffer = NULL; // pointer to buffer
 unsigned char* pI2CcommandBuffer = NULL; // pointer to receive  buffer
 
-hardware_bit_t I2C_INTERRUPT;
+hardware_bit_t* I2C_INTERRUPT;
 REGISTER I2C_CON;
 REGISTER I2C_STAT;
 REGISTER I2C_TRN;
 REGISTER I2C_RCV;
+I2C_callbackFunc res_Callback = NULL;
 
 /******************************************************************************/
 /* Parsing functions                                                          */
 /******************************************************************************/
-void I2C_Init(hardware_bit_t* i2c_interrupt, REGISTER i2c_con, REGISTER i2c_stat, REGISTER i2c_trn, REGISTER i2c_rcv) {
+void I2C_Init(hardware_bit_t* i2c_interrupt, REGISTER i2c_con, REGISTER i2c_stat, REGISTER i2c_trn, REGISTER i2c_rcv, I2C_callbackFunc resetCallback) {
 
+    I2C_INTERRUPT = i2c_interrupt;
+    I2C_CON = i2c_con;
+    I2C_STAT = i2c_stat;
+    I2C_TRN = i2c_trn;
+    I2C_RCV = i2c_rcv;
+    res_Callback = resetCallback;
+    /// Register event
+    I2C_service_handle = register_event_p(&serviceI2C, &_MODULE_I2C, EVENT_PRIORITY_LOW);
+    
+    I2C_load();
+    return;
+}
+
+/**
+ * 
+ */
+void I2C_load(void) {
     int queueIndex;
 
     for (queueIndex = 0; queueIndex < I2C_QUEUE_DEPTH; queueIndex++) {
@@ -133,50 +153,32 @@ void I2C_Init(hardware_bit_t* i2c_interrupt, REGISTER i2c_con, REGISTER i2c_stat
         i2c_queue[queueIndex].Size = 0;
         i2c_queue[queueIndex].pCallback = NULL;
     }
-    /*
-    I2C1BRG = I2CBRGVAL;
-    _I2CEN = 1; // enable I2C
-
-    _MI2C1IP = 5; // I2C at priority 5
-    _MI2C1IF = 0; // clear the I2C master interrupt
-    _MI2C1IE = 1; // enable the interrupt
-    */
     
+    REGISTER_MASK_SET_HIGH(I2C_CON, MASK_I2CCON_EN);
     /// Set low interrupt
-    bit_low(&I2C_INTERRUPT);
+    bit_low(I2C_INTERRUPT);
     
-    I2C_CON = i2c_con;
-    I2C_STAT = i2c_stat;
-    I2C_TRN = i2c_trn;
-    I2C_RCV = i2c_rcv;
-    /// Register event
-    I2C_service_handle = register_event_p(&serviceI2C, &_MODULE_I2C, EVENT_PRIORITY_LOW);
     /// Set available
     I2C_Busy = false;
-
-    return;
 }
 
+/**
+ * Reset the I2C module
+ */
 void I2C_reset(void) {
     I2C_state = &I2C_idle; // disable the response to any more interrupts
-    /*
-    I2C_ERROR = I2CSTAT; // record the error for diagnostics
     
-    _I2CEN = 0; // turn off the I2C
-    _MI2C1IF = 0; // clear the I2C master interrupt
-    _MI2C1IE = 0; // disable the interrupt
-    // pull SDA and SCL low
-    I2C_SCL = 0;
-    I2C_SDA = 0;
-    Nop();
-    // pull SDA and SCL high
-    I2C_SCL = 1;
-    I2C_SDA = 1;
+    I2C_ERROR = *I2C_STAT; // record the error for diagnostics
+    
+    REGISTER_MASK_SET_LOW(I2C_CON, MASK_I2CCON_EN);
 
-    I2CCON = 0x1000;
-    I2CSTAT = 0x0000;
-    I2C_Init();
-    */
+    res_Callback(true);
+
+    *I2C_CON = 0x1000;
+    
+    *I2C_STAT = 0x0000;
+    
+    I2C_load(); //< turn the I2C back on
     return;
 }
 
@@ -195,7 +197,7 @@ bool I2C_checkACK(unsigned int command, I2C_callbackFunc pCallback) {
     // Set ISR callback and trigger the ISR
     I2C_state = &I2C_startWrite;
     /// Set high interrupt
-    bit_high(&I2C_INTERRUPT);
+    bit_high(I2C_INTERRUPT);
     return true;
 }
 
@@ -275,7 +277,7 @@ bool I2C_serve_queue(void) {
             // Set ISR callback and trigger the ISR
             I2C_state = &I2C_startWrite;
             /// Set high interrupt
-            bit_high(&I2C_INTERRUPT);
+            bit_high(I2C_INTERRUPT);
             return true;
 
         }
@@ -462,7 +464,7 @@ void serviceI2C(int argc, char* argv) {
     if (REGISTER_MASK_READ(I2C_CON, MASK_I2CCON_EN) == 0) ///< I2C is off
     {
         I2C_state = &I2C_idle; ///< disable response to any interrupts
-        I2C_Init(&I2C_INTERRUPT, I2C_CON, I2C_STAT, I2C_TRN, I2C_RCV); //< turn the I2C back on
+        I2C_load(); //< turn the I2C back on
         ///< Put something here to reset state machine.  Make sure attached services exit nicely.
     }
 }

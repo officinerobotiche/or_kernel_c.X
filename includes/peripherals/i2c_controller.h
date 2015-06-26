@@ -28,12 +28,15 @@ extern "C" {
     /**
      * Trigger the I2C service routine to run at low priority in libUDB.c
      * initialize the I2C peripheral
+     * @param i2c_interrupt
+     * @param i2c_con
+     * @param i2c_stat
+     * @param i2c_trn
+     * @param i2c_rcv
+     * @param resetCallback
      */
-    void I2C_Init(hardware_bit_t* i2c_interrupt, REGISTER i2c_con, REGISTER i2c_stat, REGISTER i2c_trn, REGISTER i2c_rcv);
-    /**
-     * Reset the I2C module
-     */
-    void I2C_reset(void);
+    void I2C_Init(hardware_bit_t* i2c_interrupt, REGISTER i2c_con, REGISTER i2c_stat, REGISTER i2c_trn, REGISTER i2c_rcv, I2C_callbackFunc resetCallback);
+    
     /**
      * Check for I2C ACK on command
      * @param command
