@@ -23,6 +23,8 @@
 
 /// Max number of task
 #define MAX_TASKS 16
+/// Max number of arguments
+#define MAX_ARGV 2
 /**
  * Definition of task:
  * Running or not
@@ -39,7 +41,7 @@ typedef struct _tagTASK {
     uint16_t counter_freq;
     frequency_t frequency;
     int argc;
-    char argv;
+    int argv[MAX_ARGV];
 } TASK;
 
 /******************************************************************************/
@@ -65,7 +67,6 @@ void task_init(frequency_t timer_frequency) {
         tasks[taskIndex].frequency = 0;
         tasks[taskIndex].event = INVALID_EVENT_HANDLE;
         tasks[taskIndex].argc = 0;
-        tasks[taskIndex].argv = NULL;
     }
 }
 
@@ -73,8 +74,10 @@ hTask_t task_load(hEvent_t hEvent, frequency_t frequency) {
     return task_load_data(hEvent, frequency, 0, NULL);
 }
 
-hTask_t task_load_data(hEvent_t hEvent, frequency_t frequency, int argc, char argv) {
+hTask_t task_load_data(hEvent_t hEvent, frequency_t frequency, int argc, ...) {
     hTask_t taskIndex;
+    va_list argp;
+    int argc_c = 0;
     if(frequency < FREQ_TIMER && frequency > 0) {
         for (taskIndex = 0; taskIndex < MAX_TASKS; ++taskIndex) {
             if (tasks[taskIndex].event == INVALID_EVENT_HANDLE) {
@@ -83,7 +86,10 @@ hTask_t task_load_data(hEvent_t hEvent, frequency_t frequency, int argc, char ar
                 tasks[taskIndex].counter_freq = FREQ_TIMER / frequency;
                 tasks[taskIndex].frequency = frequency;
                 tasks[taskIndex].argc = argc;
-                tasks[taskIndex].argv = argv;
+                va_start(argp, argc);
+                for(argc_c = 0; argc_c < argc; ++argc) {
+                    tasks[taskIndex].argv[argc_c] = va_arg(argp, char);
+                }
                 task_count++;
                 return taskIndex;
             }
@@ -138,7 +144,7 @@ inline void task_manager(void) {
         for (taskIndex = 0; taskIndex < MAX_TASKS; ++taskIndex) {
             if(tasks[taskIndex].run == RUN) {
                 if (tasks[taskIndex].counter >= tasks[taskIndex].counter_freq) {
-                    trigger_event_data(tasks[taskIndex].event, tasks[taskIndex].argc, &tasks[taskIndex].argv);
+                    trigger_event_data(tasks[taskIndex].event, tasks[taskIndex].argc, tasks[taskIndex].argv);
                     tasks[taskIndex].counter = 0;
                 }
                 tasks[taskIndex].counter++;

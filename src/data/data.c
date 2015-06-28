@@ -30,10 +30,10 @@
 /*****************************************************************************/
 
 void inline protectedMemcpy(hardware_bit_t* reg, void *destination, const void *source, size_t num) {
-    if (bit_read(reg)) {
-        bit_low(reg);
+    if (REGISTER_MASK_READ(reg->CS_PORT, reg->CS_mask)) {
+        REGISTER_MASK_SET_LOW(reg->CS_PORT, reg->CS_mask);
         memcpy(destination, source, num);
-        bit_high(reg);
+        REGISTER_MASK_SET_HIGH(reg->CS_PORT, reg->CS_mask);
     } else {
         memcpy(destination, source, num);
     }

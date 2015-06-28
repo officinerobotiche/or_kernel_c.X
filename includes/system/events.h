@@ -46,7 +46,7 @@ extern "C" {
     /// event register number
     typedef uint16_t hEvent_t;
     /// Callback when the function start
-    typedef void (*event_callback_t)(int argc, char* argv);
+    typedef void (*event_callback_t)(int argc, int* argv);
 /******************************************************************************/
 /* System Function Prototypes                                                 */
 /******************************************************************************/
@@ -74,7 +74,7 @@ extern "C" {
      * @param argc number of data
      * @param argv datas
      */
-    void trigger_event_data(hEvent_t hEvent, int argc, char *argv);
+    void trigger_event_data(hEvent_t hEvent, int argc, int *argv);
     /**
      * Register an event with a function to call when the event started.
      * Default priority values is EVENT_PRIORITY_MEDIUM

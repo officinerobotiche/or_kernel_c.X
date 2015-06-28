@@ -67,7 +67,6 @@ void I2C_idle(void);
 void I2C_Failed(void);
 bool I2C_Normal(void);
 void I2C_trigger_service(void);
-void serviceI2C(int argc, char* argv);
     
 #define I2C "I2C"
 static string_data_t _MODULE_I2C = {I2C, sizeof (I2C)};
@@ -123,6 +122,24 @@ I2C_callbackFunc res_Callback = NULL;
 /******************************************************************************/
 /* Parsing functions                                                          */
 /******************************************************************************/
+void I2C_trigger_service(void) {
+    trigger_event(I2C_service_handle);
+}
+
+void serviceI2C(int argc, int* argv) {
+    if (REGISTER_MASK_READ(I2C_CON, MASK_I2CCON_EN) == 0) ///< I2C is off
+    {
+        I2C_state = &I2C_idle; ///< disable response to any interrupts
+        I2C_load(); //< turn the I2C back on
+        ///< Put something here to reset state machine.  Make sure attached services exit nicely.
+    }
+}
+
+inline void I2C_manager (void) {
+    (* I2C_state) (); // execute the service routine
+    return;
+}
+
 void I2C_Init(hardware_bit_t* i2c_interrupt, REGISTER i2c_con, REGISTER i2c_stat, REGISTER i2c_trn, REGISTER i2c_rcv, I2C_callbackFunc resetCallback) {
 
     I2C_INTERRUPT = i2c_interrupt;
@@ -457,22 +474,4 @@ bool I2C_Normal(void) {
         I2C_ERROR = ((unsigned int) I2C_STAT);
         return false;
     }
-}
-
-void I2C_trigger_service(void) {
-    trigger_event(I2C_service_handle);
-}
-
-void serviceI2C(int argc, char* argv) {
-    if (REGISTER_MASK_READ(I2C_CON, MASK_I2CCON_EN) == 0) ///< I2C is off
-    {
-        I2C_state = &I2C_idle; ///< disable response to any interrupts
-        I2C_load(); //< turn the I2C back on
-        ///< Put something here to reset state machine.  Make sure attached services exit nicely.
-    }
-}
-
-inline void I2C_manager (void) {
-    (* I2C_state) (); // execute the service routine
-    return;
 }

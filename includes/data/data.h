@@ -28,16 +28,16 @@ extern "C" {
 /******************************************************************************/
 /* User Level #define Macros                                                  */
 /******************************************************************************/
-    
+    /**
+     * Definition of string, with poin pointer to string and relative length
+     */
     typedef struct _string_data {
         const char* string;
         unsigned int len;
     } string_data_t;
-
 /******************************************************************************/
 /* User Function Prototypes                                                   */
 /******************************************************************************/
-
     /**
      * Protected memcpy, stop particular interrupt and copy data.
      * @param reg Interrupt to disable
@@ -46,7 +46,6 @@ extern "C" {
      * @param num size of data
      */
     void protectedMemcpy(hardware_bit_t* reg, void *destination, const void *source, size_t num);
-    
 
 #ifdef	__cplusplus
 }

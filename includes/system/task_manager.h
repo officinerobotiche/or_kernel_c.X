@@ -22,6 +22,7 @@
 extern "C" {
 #endif
 
+    #include <stdarg.h>
     #include "system/events.h"
     #include "system/modules.h"
 
@@ -80,7 +81,7 @@ extern "C" {
      * @param argv arguments
      * @return number task
      */
-    hTask_t task_load_data(hEvent_t hEvent, frequency_t frequency, int argc, char argv);
+    hTask_t task_load_data(hEvent_t hEvent, frequency_t frequency, int argc, ...);
     /**
      * Set tast to run or stop
      * @param hTask number task

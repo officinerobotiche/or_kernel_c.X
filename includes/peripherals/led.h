@@ -69,22 +69,23 @@ extern "C" {
      */
     void LED_updateBlink(led_control_t *led, short num, short blink);
     /**
-     * Blink control led
+     * Blink controller for leds. This function you must add in timer function
      * @param led to control
+     * @param len number of registered led
      */
     inline void LED_blinkController(led_control_t *led, size_t len);
     /**
-     * 
-     * @param led_controller
-     * @param load_blink
-     * @param len
+     * Start led effect flush
+     * @param led_controller list of all leds
+     * @param load_blink 
+     * @param len number of registered led
      */
     void LED_blinkFlush(led_control_t* led_controller, short* load_blink, size_t len);
     /**
-     * 
-     * @param led_controller
+     * Stop all led effects
+     * @param led_controller list of all leds
      * @param load_blink
-     * @param len
+     * @param len number of registered led
      */
     void LED_effectStop(led_control_t* led_controller, short* load_blink, size_t len);
 

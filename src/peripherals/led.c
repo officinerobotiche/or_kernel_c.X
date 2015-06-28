@@ -20,18 +20,31 @@
 /******************************************************************************/
 
 #include "peripherals/led.h"
+#include "system/task_manager.h"
 
 /******************************************************************************/
 /* Global Variable Declaration                                                */
 /******************************************************************************/
+#define LED "LED"
+static string_data_t _MODULE_LED = {LED, sizeof (LED)};
 
+/// If led effect running
 bool led_effect = false;
+/// If first launch of effect
 bool first = true;
-uint16_t freq_cqu;
-
+/// Frequency to esecution
+frequency_t freq_cqu;
+/// Led event handle
+static hEvent_t LED_service_handle = INVALID_EVENT_HANDLE;
+/// Led task handle
+static hTask_t LED_task_handle = INVALID_TASK_HANDLE;
 /*****************************************************************************/
 /* Communication Functions                                                   */
 /*****************************************************************************/
+
+void serviceLED(int argc, int* argv) {
+    LED_blinkController((led_control_t*) argv[0], (size_t) argv[1]);
+}
 
 void LED_Init(uint16_t freq, led_control_t* led_controller, size_t len) {
     int i;
@@ -40,6 +53,14 @@ void LED_Init(uint16_t freq, led_control_t* led_controller, size_t len) {
         led_controller[i].wait = 0;
         LED_updateBlink(led_controller, i, LED_OFF);
     }
+    /// Register module
+    hModule_t led_module = register_module(&_MODULE_LED);
+    /// Register event
+    LED_service_handle = register_event_p(led_module, &serviceLED, EVENT_PRIORITY_LOW);
+    
+    LED_task_handle = task_load_data(LED_service_handle, freq_cqu, 2, led_controller, len);
+    /// Run task controller
+    task_set(LED_task_handle, RUN);
 }
 
 void LED_updateBlink(led_control_t* led_controller, short num, short blink) {

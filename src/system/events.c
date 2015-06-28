@@ -50,7 +50,7 @@ typedef struct _tagEVENT {
     EVENT_TYPE eventPending;
     event_callback_t event_callback;
     int argc;
-    char* argv;
+    int* argv;
     eventPriority priority;
     uint16_t overTmr;
     uint16_t time;
@@ -123,7 +123,7 @@ void trigger_event(hEvent_t hEvent) {
     trigger_event_data(hEvent, 0, NULL);
 }
 
-void trigger_event_data(hEvent_t hEvent, int argc, char *argv) {
+void trigger_event_data(hEvent_t hEvent, int argc, int *argv) {
     if (hEvent < MAX_EVENTS) {
         if (events[hEvent].event_callback != NULL) {
             events[hEvent].eventPending = TRUE;
