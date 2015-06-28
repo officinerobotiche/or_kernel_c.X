@@ -25,6 +25,7 @@
 #include <stdbool.h>       /* Includes true/false definition */
 
 #include "peripherals/i2c_controller.h"
+#include "system/modules.h"
 
 #define MASK_I2CCON_EN           BIT_MASK(15)
 #define MASK_I2CCON_ACKDT        BIT_MASK(5)
@@ -130,8 +131,10 @@ void I2C_Init(hardware_bit_t* i2c_interrupt, REGISTER i2c_con, REGISTER i2c_stat
     I2C_TRN = i2c_trn;
     I2C_RCV = i2c_rcv;
     res_Callback = resetCallback;
+    /// Register module
+    hModule_t i2c_module = register_module(&_MODULE_I2C);
     /// Register event
-    I2C_service_handle = register_event_p(&serviceI2C, &_MODULE_I2C, EVENT_PRIORITY_LOW);
+    I2C_service_handle = register_event_p(i2c_module, &serviceI2C, EVENT_PRIORITY_LOW);
     
     I2C_load();
     return;

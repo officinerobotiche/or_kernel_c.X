@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Officine Robotiche
+ * Copyright (C) 2014-2015 Officine Robotiche
  * Author: Raffaello Bonghi
  * email:  raffaello.bonghi@officinerobotiche.it
  * Permission is granted to copy, distribute, and/or modify this program
@@ -22,27 +22,45 @@
 #include "system/events.h"
 #include "peripherals/gpio.h"
 
-#define LNG_EVENTPRIORITY sizeof(eventPriority)
-
+/// Max number of events
 #define MAX_EVENTS 16
-
+/**
+ * Event state:
+ * FALSE: The event doesn't running
+ * WORKING: The event is in elaboration
+ * TRUE: The event finished
+ */
 typedef enum _event_type {
     FALSE = 0,
     WORKING,
     TRUE,
 } EVENT_TYPE;
-
+/**
+ * Information about event:
+ * State of event
+ * Function to call
+ * number of argument
+ * arguments
+ * priority
+ * overflow timer
+ * time to computation
+ * Name event
+ */
 typedef struct _tagEVENT {
-        EVENT_TYPE eventPending;
-        event_callback_t event_callback;
-        uint16_t overTmr;
-        int argc;
-        char* argv;
-        uint8_t priority;
-        time_t time;
-        string_data_t* name;
+    EVENT_TYPE eventPending;
+    event_callback_t event_callback;
+    int argc;
+    char* argv;
+    eventPriority priority;
+    uint16_t overTmr;
+    time_t time;
+    hModule_t name;
 } EVENT;
-
+/**
+ * Information about hardware interrupt
+ * Bit Interrupt to call
+ * state of interrupt
+ */
 typedef struct _interrupt_bit {
     hardware_bit_t* interrupt_bit;
     bool available;
@@ -51,18 +69,24 @@ typedef struct _interrupt_bit {
 /******************************************************************************/
 /* Global Variable Declaration                                                */
 /******************************************************************************/
-
+/// Declare an array with all interrupts
 interrupt_bit_t interrupts[LNG_EVENTPRIORITY];
+/// Declare an array with all events
 EVENT events[MAX_EVENTS];
+/// Number of all event registered
 unsigned short event_counter = 0;
+/// Timer register
 REGISTER timer;
+/// Counter time register
 REGISTER PRTIMER;
 
-/*****************************************************************************/
-/* Communication Functions                                                   */
-
-/*****************************************************************************/
-
+/******************************************************************************/
+/* Communication Functions                                                    */
+/******************************************************************************/
+/**
+ * Reset event, with default configuration
+ * @param eventIndex Number of array
+ */
 void reset_event(hEvent_t eventIndex) {
     events[eventIndex].event_callback = NULL;
     events[eventIndex].eventPending = FALSE;
@@ -90,7 +114,6 @@ void init_events(REGISTER timer_register, REGISTER pr_timer) {
 
 void register_interrupt(eventPriority priority, hardware_bit_t* pin) {
     interrupts[priority].interrupt_bit = pin;
-    //bit_setup(&interrupts[priority].interrupt_bit);
     bit_low(interrupts[priority].interrupt_bit);
     interrupts[priority].available = true;
     event_counter++;
@@ -111,11 +134,11 @@ void trigger_event_data(hEvent_t hEvent, int argc, char *argv) {
     }
 }
 
-hEvent_t register_event(event_callback_t event_callback, string_data_t* name) {
-    return register_event_p(event_callback, name, EVENT_PRIORITY_MEDIUM);
+hEvent_t register_event(hModule_t name, event_callback_t event_callback) {
+    return register_event_p(name, event_callback, EVENT_PRIORITY_MEDIUM);
 }
 
-hEvent_t register_event_p(event_callback_t event_callback, string_data_t* name, eventPriority priority) {
+hEvent_t register_event_p(hModule_t name, event_callback_t event_callback, eventPriority priority) {
     hEvent_t eventIndex;
 
     if (interrupts[priority].available) {
@@ -140,8 +163,8 @@ bool unregister_event(hEvent_t eventIndex) {
         return false;
 }
 
-string_data_t get_event_name(hEvent_t eventIndex) {
-    return *events[eventIndex].name;
+hModule_t get_event_name(hEvent_t eventIndex) {
+    return events[eventIndex].name;
 }
 
 inline void event_manager(eventPriority priority) {

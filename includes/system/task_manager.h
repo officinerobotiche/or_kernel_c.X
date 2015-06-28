@@ -23,6 +23,7 @@ extern "C" {
 #endif
 
     #include "system/events.h"
+    #include "system/modules.h"
 
     /**
      * Definition of Task
@@ -84,7 +85,7 @@ extern "C" {
     
     bool task_unload(hTask_t hTask);
     
-    string_data_t get_task_name(hTask_t taskIndex);
+    hModule_t get_task_name(hTask_t taskIndex);
     
     unsigned short get_task_number(void);
 
