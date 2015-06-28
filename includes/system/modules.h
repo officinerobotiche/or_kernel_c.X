@@ -29,11 +29,11 @@ extern "C" {
 #include <stdint.h>        /* Includes uint16_t definition                    */
 #include "data/data.h"
     
-/// Invalid handle for event
-#define INVALID_MODULE_HANDLE 0xFFFF
-    
-/// Module register number
-typedef uint16_t hModule_t;
+    /// Invalid handle for event
+    #define INVALID_MODULE_HANDLE 0xFFFF
+
+    /// Module register number
+    typedef uint16_t hModule_t;
     
 /******************************************************************************/
 /* System Function Prototypes                                                 */

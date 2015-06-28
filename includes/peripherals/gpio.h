@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Officine Robotiche
+ * Copyright (C) 2014-2015 Officine Robotiche
  * Author: Raffaello Bonghi
  * email:  raffaello.bonghi@officinerobotiche.it
  * Permission is granted to copy, distribute, and/or modify this program
@@ -24,26 +24,56 @@ extern "C" {
     
 #include <stdbool.h>         /* For true/false definition                     */
 
-#define BIT_MASK(x)                       (1 << (x))
-#define REGISTER_INIT(reg, x)             {&(reg), BIT_MASK(x)}
-#define REGISTER_MASK_SET_HIGH(reg, mask) (*(reg) |= (mask))
-#define REGISTER_MASK_SET_LOW(reg, mask)  (*(reg) &= ~(mask))
-#define REGISTER_MASK_TOGGLE(reg, mask)   (*(reg) ^= (mask))
-#define REGISTER_MASK_READ(reg, mask)     ((*(reg) & (mask)) == (mask))
+/******************************************************************************/
+/* System Level #define Macros                                                */
+/******************************************************************************/
+    /// Build a Max bit in x position
+    #define BIT_MASK(x)                       (1 << (x))
+    /// Initialize hardware_bit_t with name register and bit mask
+    #define REGISTER_INIT(reg, x)             {&(reg), BIT_MASK(x)}
+    /// Set high bits in register with selected mask
+    #define REGISTER_MASK_SET_HIGH(reg, mask) (*(reg) |= (mask))
+    /// Set low bits in register with selected mask
+    #define REGISTER_MASK_SET_LOW(reg, mask)  (*(reg) &= ~(mask))
+    /// Toggle bits in register with selected mask
+    #define REGISTER_MASK_TOGGLE(reg, mask)   (*(reg) ^= (mask))
+    /// Read bits in register with selected mask
+    #define REGISTER_MASK_READ(reg, mask)     ((*(reg) & (mask)) == (mask))
     
+    /// Generic definition for register
     typedef volatile unsigned int * REGISTER;
-    
+    /**
+     * Hardware bit
+     * Register
+     * Mask with selected bit
+     */
     typedef struct _hardware_bit {
         REGISTER CS_PORT;
         unsigned int CS_mask;
     } hardware_bit_t;
-    
+/******************************************************************************/
+/* System Function Prototypes                                                 */
+/******************************************************************************/
+    /**
+     * Set high value selected hardware bit. Use previus define
+     * @param bit_control hardware bit
+     */
     inline void bit_high(hardware_bit_t* bit_control);
-    
+    /**
+     * Set low value selected hardware bit. Use previus define
+     * @param bit_control hardware bit
+     */
     inline void bit_low(hardware_bit_t* bit_control);
-    
+    /**
+     * Toggle value selected hardware bit. Use previus define
+     * @param bit_control hardware bit
+     */
     inline void bit_toggle(hardware_bit_t* bit_control);
-    
+    /**
+     * Read value selected hardware bit. Use previus define
+     * @param bit_control hardware bit
+     * @return state of hardware bit
+     */
     inline bool bit_read(hardware_bit_t* bit_control);
 
 #ifdef	__cplusplus

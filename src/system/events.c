@@ -53,7 +53,7 @@ typedef struct _tagEVENT {
     char* argv;
     eventPriority priority;
     uint16_t overTmr;
-    time_t time;
+    uint16_t time;
     hModule_t name;
 } EVENT;
 /**
@@ -114,7 +114,7 @@ void init_events(REGISTER timer_register, REGISTER pr_timer) {
 
 void register_interrupt(eventPriority priority, hardware_bit_t* pin) {
     interrupts[priority].interrupt_bit = pin;
-    bit_low(interrupts[priority].interrupt_bit);
+    REGISTER_MASK_SET_LOW(interrupts[priority].interrupt_bit->CS_PORT, interrupts[priority].interrupt_bit->CS_mask);
     interrupts[priority].available = true;
     event_counter++;
 }
@@ -129,7 +129,7 @@ void trigger_event_data(hEvent_t hEvent, int argc, char *argv) {
             events[hEvent].eventPending = TRUE;
             events[hEvent].argc = argc;
             events[hEvent].argv = argv;
-            bit_high(interrupts[events[hEvent].priority].interrupt_bit);
+            REGISTER_MASK_SET_HIGH(interrupts[events[hEvent].priority].interrupt_bit->CS_PORT, interrupts[events[hEvent].priority].interrupt_bit->CS_mask);
         }
     }
 }
@@ -151,11 +151,11 @@ hEvent_t register_event_p(hModule_t name, event_callback_t event_callback, event
             }
         }
     }
-    return INVALID_HANDLE;
+    return INVALID_EVENT_HANDLE;
 }
 
 bool unregister_event(hEvent_t eventIndex) {
-    if (event_counter <= 0 && eventIndex != INVALID_HANDLE) {
+    if (event_counter <= 0 && eventIndex != INVALID_EVENT_HANDLE) {
         reset_event(eventIndex);
         event_counter--;
         return true;
@@ -176,7 +176,7 @@ inline void event_manager(eventPriority priority) {
             pEvent = &events[eventIndex];
             if ((pEvent->eventPending == TRUE) && (pEvent->priority == priority)) {
                 if (pEvent->event_callback != NULL) {
-                    volatile time_t time;
+                    volatile uint16_t time;
                     pEvent->eventPending = WORKING;
                     pEvent->overTmr = 0;                                            ///< Reset timer
                     time = *timer;                                                  ///< Timing function
@@ -191,8 +191,8 @@ inline void event_manager(eventPriority priority) {
     }
 }
 
-inline time_t get_time(hEvent_t hEvent) {
-    if (hEvent != INVALID_HANDLE) {
-        return events[hEvent].time;
+inline uint16_t get_time(hEvent_t hEvent) {
+    if (hEvent != INVALID_EVENT_HANDLE) {
+        return  events[hEvent].time;
     } else return 0;
 }

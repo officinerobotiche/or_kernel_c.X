@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Officine Robotiche
+ * Copyright (C) 2014-2015 Officine Robotiche
  * Authors: Guido Ottaviani, Raffaello Bonghi
  * email:  guido@guiott.com, raffaello.bonghi@officinerobotiche.it
  * Permission is granted to copy, distribute, and/or modify this program
@@ -87,7 +87,7 @@ typedef struct tag_I2Cqueue {
 
 I2Cqueue i2c_queue[I2C_QUEUE_DEPTH];
 
-static hEvent_t I2C_service_handle = INVALID_HANDLE;
+static hEvent_t I2C_service_handle = INVALID_EVENT_HANDLE;
 /// Pointer to function
 void (* I2C_state) (void) = &I2C_idle;
 // Port busy flag.  Set true until initialized

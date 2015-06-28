@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Officine Robotiche
+ * Copyright (C) 2014-2015 Officine Robotiche
  * Author: Raffaello Bonghi
  * email:  raffaello.bonghi@officinerobotiche.it
  * Permission is granted to copy, distribute, and/or modify this program
@@ -25,26 +25,29 @@ extern "C" {
     #include "system/events.h"
     #include "system/modules.h"
 
-    /**
-     * Definition of Task
-     */
+/******************************************************************************/
+/* System Level #define Macros                                                */
+/******************************************************************************/
+    /// Invalid handle for event
+    #define INVALID_TASK_HANDLE 0xFFFF
+    /// Invalid handle for event
+    #define INVALID_FREQUENCY 0xFFFFFFFF
+
+    /// Definition of Task
     typedef uint16_t hTask_t;
-    
-    /**
-     * Definition of frequency
-     */
-    typedef uint16_t frequency_t;
-    
+    /// Definition of frequency
+    typedef uint32_t frequency_t;
+    /// time function in [uS]
+    typedef int16_t time_t;
     /**
      * Definition status task:
-     * * STOP - The task is loaded, but does not work
-     * * RUN  - The task is loaded and working
+     * STOP - The task is loaded, but does not work
+     * RUN  - The task is loaded and working
      */
     typedef enum _task_status {
         STOP,
         RUN,
     } task_status_t;
-    
     /**
      * Structure definition of task:
      * * task number
@@ -54,41 +57,64 @@ extern "C" {
         hTask_t task;
         frequency_t frequency;
     } task_t;
-    
+/******************************************************************************/
+/* System Function Prototypes                                                 */
+/******************************************************************************/
     /**
      * Initialization task manager
+     * @param timer_frequency frequency timer
      */
-    void task_init(void);
-    
+    void task_init(frequency_t timer_frequency);
     /**
-     * Load a task. To launch a task you must load before an event and set in
-     * a task manager.
-     * @param hEvent 
-     * @param frequency
-     * @return 
+     * Load event in task manager, with a frequency and arguments to lanch when started
+     * @param hEvent number event
+     * @param frequency frequency to automatic start
+     * @return number task
      */
     hTask_t task_load(hEvent_t hEvent, frequency_t frequency);
-    
     /**
-     * 
-     * @param hEvent
-     * @param frequency
-     * @param argc
-     * @param argv
-     * @return 
+     * Load event in task manager, with a frequency and arguments to lanch when started
+     * @param hEvent number event
+     * @param frequency frequency to automatic start
+     * @param argc number arguments
+     * @param argv arguments
+     * @return number task
      */
     hTask_t task_load_data(hEvent_t hEvent, frequency_t frequency, int argc, char argv);
-    
-    bool task_status(hTask_t hTask, task_status_t run);
-    
-    bool change_frequency(hTask_t hTask, frequency_t frequency);
-    
+    /**
+     * Set tast to run or stop
+     * @param hTask number task
+     * @param run RUN or STOP
+     * @return if task is correct return true
+     */
+    bool task_set(hTask_t hTask, task_status_t run);
+    /**
+     * Change frequency operation 
+     * @param hTask number task
+     * @param frequency new frequency
+     * @return if frequency is minor to timer frequncy return true
+     */
+    bool task_set_frequency(hTask_t hTask, frequency_t frequency);
+    /**
+     * Unload task and remove from task avaliable
+     * @param hTask Number task
+     * @return if task exist
+     */
     bool task_unload(hTask_t hTask);
-    
-    hModule_t get_task_name(hTask_t taskIndex);
-    
+    /**
+     * Return associated number module name
+     * @param taskIndex number task
+     * @return number module
+     */
+    hModule_t task_get_name(hTask_t taskIndex);
+    /**
+     * Number of registered tasks
+     * @return number task
+     */
     unsigned short get_task_number(void);
-
+    /**
+     *  This function you must call in timer function
+     */
     inline void task_manager(void);
 
 #ifdef	__cplusplus

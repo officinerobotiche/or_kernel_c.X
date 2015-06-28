@@ -31,93 +31,89 @@ extern "C" {
 /******************************************************************************/
 /* System Level #define Macros                                                */
 /******************************************************************************/
-    
-/// Invalid handle for event
-#define INVALID_HANDLE 0xFFFF
+    /// Invalid handle for event
+    #define INVALID_EVENT_HANDLE 0xFFFF
+    /// Dimension event priority
+    #define LNG_EVENTPRIORITY 4
 
-/// Type of events, from low level to high level
-typedef enum _eventP {
-    EVENT_PRIORITY_LOW = 0,
-    EVENT_PRIORITY_MEDIUM,
-    EVENT_PRIORITY_HIGH,
-    EVENT_PRIORITY_VERY_LOW,
-} eventPriority;
-/// Dimenson event priority
-#define LNG_EVENTPRIORITY 4
-/// time function
-typedef int16_t time_t;
-/// event register number
-typedef uint16_t hEvent_t;
-/// Callback when the function start
-typedef void (*event_callback_t)(int argc, char* argv);
-
+    /// Type of events, from low level to high level
+    typedef enum _eventP {
+        EVENT_PRIORITY_LOW = 0,
+        EVENT_PRIORITY_MEDIUM,
+        EVENT_PRIORITY_HIGH,
+        EVENT_PRIORITY_VERY_LOW,
+    } eventPriority;
+    /// event register number
+    typedef uint16_t hEvent_t;
+    /// Callback when the function start
+    typedef void (*event_callback_t)(int argc, char* argv);
 /******************************************************************************/
 /* System Function Prototypes                                                 */
 /******************************************************************************/
-/**
- * Initialization event controller, with this function you can set to default 
- * all register events parameter and setup timer evaluation.
- * @param timer_register Timer register
- * @param pr_timer Register counter
- */
-void init_events(REGISTER timer_register, REGISTER pr_timer);
-/**
- * You can register an event interrupt, with type of priority and bit interrupt
- * @param priority type of priority
- * @param pin Interrupt bit to will be used to start interrupt
- */
-void register_interrupt(eventPriority priority, hardware_bit_t* pin);
-/**
- * Launch a particular function event
- * @param hEvent number of event
- */
-void trigger_event(hEvent_t hEvent);
-/**
- * Launch the event with data
- * @param hEvent Number event
- * @param argc number of data
- * @param argv datas
- */
-void trigger_event_data(hEvent_t hEvent, int argc, char *argv);
-/**
- * Register an event with a function to call when the event started.
- * Default priority values is EVENT_PRIORITY_MEDIUM
- * @param name associated number module name
- * @param event_callback function to call
- * @return number event
- */
-hEvent_t register_event(hModule_t name, event_callback_t event_callback);
-/**
- * Register an event with priority and a function to call when the event started
- * @param name associated number module name
- * @param event_callback function to call
- * @param priority priority for this event
- * @return number event
- */
-hEvent_t register_event_p(hModule_t name, event_callback_t event_callback, eventPriority priority);
-/**
- * Get number module associated
- * @param eventIndex index event
- * @return index module
- */
-hModule_t get_event_name(hEvent_t eventIndex);
-/**
- * Remove from list of events the event
- * @param eventIndex index event
- * @return true if is correct unloaded, false otherwhise
- */
-bool unregister_event(hEvent_t eventIndex);
-/**
- * This function you must call in interrupt function and you can set type of priority
- * @param priority number of priority
- */
-inline void event_manager(eventPriority priority);
-/**
- * Return time to computation the event
- * @param hEvent number event
- * @return time to computation
- */
-inline time_t get_time(hEvent_t hEvent);
+    /**
+     * Initialization event controller, with this function you can set to default 
+     * all register events parameter and setup timer evaluation.
+     * @param timer_register Timer register
+     * @param pr_timer Register counter
+     */
+    void init_events(REGISTER timer_register, REGISTER pr_timer);
+    /**
+     * You can register an event interrupt, with type of priority and bit interrupt
+     * @param priority type of priority
+     * @param pin Interrupt bit to will be used to start interrupt
+     */
+    void register_interrupt(eventPriority priority, hardware_bit_t* pin);
+    /**
+     * Launch a particular function event
+     * @param hEvent number of event
+     */
+    void trigger_event(hEvent_t hEvent);
+    /**
+     * Launch the event with data
+     * @param hEvent Number event
+     * @param argc number of data
+     * @param argv datas
+     */
+    void trigger_event_data(hEvent_t hEvent, int argc, char *argv);
+    /**
+     * Register an event with a function to call when the event started.
+     * Default priority values is EVENT_PRIORITY_MEDIUM
+     * @param name associated number module name
+     * @param event_callback function to call
+     * @return number event
+     */
+    hEvent_t register_event(hModule_t name, event_callback_t event_callback);
+    /**
+     * Register an event with priority and a function to call when the event started
+     * @param name associated number module name
+     * @param event_callback function to call
+     * @param priority priority for this event
+     * @return number event
+     */
+    hEvent_t register_event_p(hModule_t name, event_callback_t event_callback, eventPriority priority);
+    /**
+     * Get number module associated
+     * @param eventIndex index event
+     * @return index module
+     */
+    hModule_t get_event_name(hEvent_t eventIndex);
+    /**
+     * Remove from list of events the event
+     * @param eventIndex index event
+     * @return true if is correct unloaded, false otherwhise
+     */
+    bool unregister_event(hEvent_t eventIndex);
+    /**
+     * This function you must call in interrupt function and you can set the relative priority
+     * @param priority number of priority
+     */
+    inline void event_manager(eventPriority priority);
+    /**
+     * Return time to computation the event
+     * @param hEvent number event
+     * @return time to computation in [uS]
+     */
+    inline uint16_t get_time(hEvent_t hEvent);
 
 #ifdef	__cplusplus
 }

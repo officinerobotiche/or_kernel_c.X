@@ -28,6 +28,14 @@ extern "C" {
     
 #include "peripherals/gpio.h"
     
+/******************************************************************************/
+/* User Level #define Macros                                                  */
+/******************************************************************************/
+    /// Set High a led
+    #define LED_ALWAYS_HIGH -1
+    /// Set off led
+    #define LED_OFF 0
+
     /**
      * Struct to control blink led
      * - port name to bit register to mount led
@@ -37,7 +45,6 @@ extern "C" {
      *      -# 0 led off - LED_OFF
      *      -# n number of blink
      */
-    
     typedef struct led_control {
         hardware_bit_t* pin;
         unsigned int counter;
@@ -45,25 +52,15 @@ extern "C" {
         unsigned int wait;
         short number_blink;
     } led_control_t;
-
-/******************************************************************************/
-/* User Level #define Macros                                                  */
-/******************************************************************************/
-    
-#define LED_ALWAYS_HIGH -1
-#define LED_OFF 0
-    
 /******************************************************************************/
 /* User Function Prototypes                                                   */
 /******************************************************************************/
-    
     /**
      * Initialization LEDs
      * @param led_controller
      * @param len
      */
     void LED_Init(uint16_t freq, led_control_t* led_controller, size_t len);
-    
     /**
      * Update frequency or type of blink
      * @param led array of available leds
@@ -71,13 +68,11 @@ extern "C" {
      * @param blink number of blinks
      */
     void LED_updateBlink(led_control_t *led, short num, short blink);
-
     /**
      * Blink control led
      * @param led to control
      */
     inline void LED_blinkController(led_control_t *led, size_t len);
-
     /**
      * 
      * @param led_controller
@@ -85,7 +80,6 @@ extern "C" {
      * @param len
      */
     void LED_blinkFlush(led_control_t* led_controller, short* load_blink, size_t len);
-    
     /**
      * 
      * @param led_controller
