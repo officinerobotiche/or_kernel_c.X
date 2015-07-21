@@ -77,7 +77,7 @@ hTask_t task_load(hEvent_t hEvent, frequency_t frequency) {
 hTask_t task_load_data(hEvent_t hEvent, frequency_t frequency, int argc, ...) {
     hTask_t taskIndex;
     va_list argp;
-    int argc_c = 0;
+    int argc_counter = 0;
     if(frequency <= FREQ_TIMER && frequency > 0) {
         for (taskIndex = 0; taskIndex < MAX_TASKS; ++taskIndex) {
             if (tasks[taskIndex].event == INVALID_EVENT_HANDLE) {
@@ -87,8 +87,8 @@ hTask_t task_load_data(hEvent_t hEvent, frequency_t frequency, int argc, ...) {
                 tasks[taskIndex].frequency = frequency;
                 tasks[taskIndex].argc = argc;
                 va_start(argp, argc);
-                for(argc_c = 0; argc_c < argc; ++argc_c) {
-                    tasks[taskIndex].argv[argc_c] = va_arg(argp, int);
+                for(argc_counter = 0; argc_counter < argc; ++argc_counter) {
+                    tasks[taskIndex].argv[argc_counter] = va_arg(argp, int);
                 }
                 task_count++;
                 return taskIndex;
