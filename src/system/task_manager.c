@@ -108,7 +108,7 @@ bool task_set(hTask_t hTask, task_status_t run) {
 
 bool task_set_frequency(hTask_t hTask, frequency_t frequency) {
     if(hTask != INVALID_TASK_HANDLE) {
-        if(frequency < FREQ_TIMER && frequency > 0) {
+        if(frequency <= FREQ_TIMER && frequency > 0) {
             tasks[hTask].counter_freq = FREQ_TIMER / frequency;
             tasks[hTask].frequency = frequency;
             return true;
