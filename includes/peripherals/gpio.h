@@ -27,6 +27,9 @@ extern "C" {
 /******************************************************************************/
 /* System Level #define Macros                                                */
 /******************************************************************************/
+    /// Port builder
+    #define GPIO_DEF(LETTER_PORT) _TRIS##LETTER_PORT; \ _PORT##LETTER_PORT;
+    
     /// Build a Max bit in x position
     #define BIT_MASK(x)                       (1 << (x))
     /// Initialize hardware_bit_t with name register and bit mask
