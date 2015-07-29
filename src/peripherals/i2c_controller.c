@@ -27,6 +27,7 @@
 #include "peripherals/i2c_controller.h"
 #include "system/modules.h"
 
+/// Define mask type of bit
 #define MASK_I2CCON_EN           BIT_MASK(15)
 #define MASK_I2CCON_ACKDT        BIT_MASK(5)
 #define MASK_I2CCON_ACKEN        BIT_MASK(4)
@@ -73,22 +74,24 @@ void I2C_trigger_service(void);
     
 #define I2C "I2C"
 static string_data_t _MODULE_I2C = {I2C, sizeof (I2C)};
-
+/// define depth queue
 #define I2C_QUEUE_DEPTH     3
-
+/// Define I2C queue
 typedef struct tag_I2Cqueue {
-    bool pending;
-    bool rW;
-    unsigned char command;
-    unsigned char* pcommandData;
-    unsigned char commandDataSize;
-    unsigned char* pData;
-    unsigned int Size;
-    I2C_callbackFunc pCallback;
+    bool pending;                   ///< If the I2C message is in pending
+    bool rW;                        ///< type of message
+    unsigned char command;          ///< Command
+    unsigned char* pcommandData;    ///< Command data
+    unsigned char commandDataSize;  ///< Size of command data
+    unsigned char* pData;           ///< Pointer to additional data
+    unsigned int Size;              ///< Size of additional data
+    I2C_callbackFunc pCallback;     ///< Callback
 } I2Cqueue;
-
+/// Buffer I2C queue
 I2Cqueue i2c_queue[I2C_QUEUE_DEPTH];
-
+/// Size I2C queue
+int I2CMAXQ = 0;
+/// I2C service event
 static hEvent_t I2C_service_handle = INVALID_EVENT_HANDLE;
 /// Pointer to function
 void (* I2C_state) (void) = &I2C_idle;
@@ -104,16 +107,14 @@ typedef struct _I2C_data_size {
     unsigned int rx;
 } I2C_data_size_t;
 I2C_data_size_t I2C_data_size = {0, 0};
-
+/// Type of error
 int I2C_ERROR = 0;
-//int I2CMAXS = 0;
-int I2CMAXQ = 0;
 
 unsigned char I2C_CommandByte = 0;
-unsigned int I2C_command_data_size = 0; // command data size
+unsigned int I2C_command_data_size = 0; ///< command data size
 
-unsigned char* pI2CBuffer = NULL; // pointer to buffer
-unsigned char* pI2CcommandBuffer = NULL; // pointer to receive  buffer
+unsigned char* pI2CBuffer = NULL; ///< pointer to buffer
+unsigned char* pI2CcommandBuffer = NULL; ///< pointer to receive  buffer
 
 hardware_bit_t* I2C_INTERRUPT;
 REGISTER I2C_CON;
@@ -125,10 +126,17 @@ I2C_callbackFunc res_Callback = NULL;
 /******************************************************************************/
 /* Parsing functions                                                          */
 /******************************************************************************/
+/**
+ * Trigger the I2C controller event
+ */
 void I2C_trigger_service(void) {
     trigger_event(I2C_service_handle);
 }
-
+/**
+ * Default operation when I2C event is launched
+ * @param argc unused
+ * @param argv unused
+ */
 void serviceI2C(int argc, int* argv) {
     if (REGISTER_MASK_READ(I2C_CON, MASK_I2CCON_EN) == 0) ///< I2C is off
     {
@@ -161,7 +169,7 @@ void I2C_Init(hardware_bit_t* i2c_interrupt, REGISTER i2c_con, REGISTER i2c_stat
 }
 
 /**
- * 
+ * Initialize the I2C queue buffer and reset state of I2C controller
  */
 void I2C_load(void) {
     int queueIndex;
@@ -223,13 +231,23 @@ bool I2C_checkACK(unsigned int command, I2C_callbackFunc pCallback) {
     bit_high(I2C_INTERRUPT);
     return true;
 }
-
+/**
+ * Send the message with additional data
+ * @param command command data usually the address of peripherals
+ * @param pcommandData additional message
+ * @param commandDataSize size of additional message
+ * @param rW type of message
+ * @param ptrxData pointer to data
+ * @param trxSize size of data
+ * @param pCallback Callback when the controller complete or fail to send the message
+ * @return status of sending message
+ */
 void I2C_loadCommand(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, unsigned short rW, unsigned char* ptrxData, unsigned int trxSize, I2C_callbackFunc pCallback) {
     
     pI2C_callback = pCallback;
-    I2C_command_data_size = commandDataSize;
-    pI2CcommandBuffer = pcommandData;
     I2C_CommandByte = command;
+    pI2CcommandBuffer = pcommandData;
+    I2C_command_data_size = commandDataSize;
     pI2CBuffer = ptrxData;
 
     if (rW == I2C_COMMAND_WRITE) {
@@ -245,7 +263,17 @@ void I2C_loadCommand(unsigned char command, unsigned char* pcommandData, unsigne
     /// Set high interrupt
     bit_high(I2C_INTERRUPT);
 }
-
+/**
+ * Load in buffer the message with additional data
+ * @param command command data usually the address of peripherals
+ * @param pcommandData additional message
+ * @param commandDataSize size of additional message
+ * @param rW type of message
+ * @param ptrxData pointer to data
+ * @param trxSize size of data
+ * @param pCallback Callback when the controller complete or fail to send the message
+ * @return status of sending message
+ */
 i2c_state_t I2C_loadBuffer(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, unsigned short rW, unsigned char* ptrxData, unsigned int trxSize, I2C_callbackFunc pCallback) {
     int queueIndex;
     if (I2CMAXQ < I2C_QUEUE_DEPTH) {
@@ -293,6 +321,9 @@ i2c_state_t I2C_Read(unsigned char command, unsigned char* pcommandData, unsigne
     return true;
 }
 
+/**
+ * Serve all I2C messages in pending
+ */
 void I2C_serve_queue(void) {
     int queueIndex;
     for (queueIndex = 0; queueIndex < I2C_QUEUE_DEPTH; queueIndex++) {
@@ -306,7 +337,10 @@ void I2C_serve_queue(void) {
         }
     }
 }
-
+/**
+ * Check the I2C is available
+ * @return state of I2C
+ */
 inline bool I2C_CheckAvailable(void) {
     if (REGISTER_MASK_READ(I2C_CON, MASK_I2CCON_EN) == 0) return false;
     if (REGISTER_MASK_READ(I2C_STAT, 0b0000010011000000) != 0) return false;
@@ -316,7 +350,9 @@ inline bool I2C_CheckAvailable(void) {
 
     return true;
 }
-
+/**
+ * Enable write message in controller
+ */
 void I2C_startWrite(void) {
     I2C_Index = 0; // Reset index into buffer
 
@@ -324,16 +360,20 @@ void I2C_startWrite(void) {
     REGISTER_MASK_SET_HIGH(I2C_CON, MASK_I2CCON_SEN);
     return;
 }
-
+/**
+ * Write the command message (usually the address of peripherals
+ */
 void I2C_writeCommand(void) {
     *(I2C_TRN) = I2C_CommandByte & 0xFE;
     I2C_state = &I2C_writeCommandData;
     return;
 }
-
+/**
+ * If the ACK return true send the command data and jump to read/write operation
+ */
 void I2C_writeCommandData(void) {
-    if (REGISTER_MASK_READ(I2C_STAT, MASK_I2CSTAT_ACKSTAT) == 1) // Device not responding
-    {
+    if (REGISTER_MASK_READ(I2C_STAT, MASK_I2CSTAT_ACKSTAT) == 1) {
+        // Device not responding
         I2C_Failed();
         return;
     }
@@ -359,17 +399,24 @@ void I2C_writeCommandData(void) {
 
 /* READ FUNCTIONS */
 
+/**
+ * Start read operation
+ */
 void I2C_readStart(void) {
     I2C_Index = 0; // Reset index into buffer
     I2C_state = &I2C_readCommand;
     REGISTER_MASK_SET_HIGH(I2C_CON, MASK_I2CCON_SEN);
 }
-
+/**
+ * Send write command message
+ */
 void I2C_readCommand(void) {
     I2C_state = &I2C_recen;
     *(I2C_TRN) = I2C_CommandByte | 0x01;
 }
-
+/**
+ * Check the peripherals responding and start reading operation
+ */
 void I2C_recen(void) {
     if (REGISTER_MASK_READ(I2C_STAT, MASK_I2CSTAT_ACKSTAT) == 1) {
         // Device not responding
@@ -381,7 +428,9 @@ void I2C_recen(void) {
     }
     return;
 }
-
+/**
+ * Store all read data in buffer
+ */
 void I2C_recstore(void) {
     if(pI2CBuffer != NULL) {
         pI2CBuffer[I2C_Index++] = *I2C_RCV;
@@ -396,19 +445,26 @@ void I2C_recstore(void) {
     REGISTER_MASK_SET_HIGH(I2C_CON, MASK_I2CCON_ACKEN);
     return;
 }
-
+/**
+ * Stop read
+ */
 void I2C_stopRead(void) {
     REGISTER_MASK_SET_HIGH(I2C_CON, MASK_I2CCON_PEN);
     I2C_state = &I2C_doneRead;
     return;
 }
-
+/**
+ * Update read operation
+ */
 void I2C_rerecen(void) {
     I2C_state = &I2C_recstore;
     REGISTER_MASK_SET_HIGH(I2C_CON, MASK_I2CCON_RCEN);
     return;
 }
-
+/**
+ * Done read and launch callback.
+ * If the queue is not empty launch other message in queue
+ */
 void I2C_doneRead(void) {
     I2C_Busy = false;
     if (pI2C_callback != NULL)
@@ -420,9 +476,12 @@ void I2C_doneRead(void) {
 
 /* WRITE FUNCTIONS */
 
+/**
+ * If the ACK return true send the message
+ */
 void I2C_writeData(void) {
-    if (REGISTER_MASK_READ(I2C_STAT, MASK_I2CSTAT_ACKSTAT) == 1) // Device not responding
-    {
+    if (REGISTER_MASK_READ(I2C_STAT, MASK_I2CSTAT_ACKSTAT) == 1) {
+        // Device not responding
         I2C_Failed();
         return;
     }
@@ -443,13 +502,18 @@ void I2C_writeData(void) {
     }
     return;
 }
-
+/**
+ * Launch stop operation
+ */
 void I2C_writeStop(void) {
     I2C_state = &I2C_doneWrite;
     REGISTER_MASK_SET_HIGH(I2C_CON, MASK_I2CCON_PEN);
     return;
 }
-
+/**
+ * Done write and launch callback.
+ * If the queue is not empty launch other message in queue
+ */
 void I2C_doneWrite(void) {
     I2C_Busy = false;
     if (pI2C_callback != NULL)
@@ -462,10 +526,15 @@ void I2C_doneWrite(void) {
 
 /* SERVICE FUNCTIONS */
 
+/**
+ * Idle operation
+ */
 void I2C_idle(void) {
     return;
 }
-
+/**
+ * Stop I2C read/write and launch callback with false
+ */
 void I2C_Failed(void) {
     I2C_state = &I2C_idle;
     REGISTER_MASK_SET_HIGH(I2C_CON, MASK_I2CCON_PEN);
@@ -473,7 +542,10 @@ void I2C_Failed(void) {
     if (pI2C_callback != NULL)
         pI2C_callback(false);
 }
-
+/**
+ * Status of I2C
+ * @return status I2C
+ */
 bool I2C_Normal(void) {
     if (REGISTER_MASK_READ(I2C_STAT, 0b0000010011000000) == 0)
         return true;
