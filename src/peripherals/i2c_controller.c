@@ -45,7 +45,7 @@
 
 void I2C_load(void);
 void I2C_reset(void);
-bool I2C_serve_queue(void);
+void I2C_serve_queue(void);
 inline bool I2C_CheckAvailable(void);
 void I2C_startWrite(void);
 void I2C_writeCommand(void);
@@ -248,7 +248,7 @@ void I2C_loadCommand(unsigned char command, unsigned char* pcommandData, unsigne
 
 i2c_state_t I2C_loadBuffer(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, unsigned short rW, unsigned char* ptrxData, unsigned int trxSize, I2C_callbackFunc pCallback) {
     int queueIndex;
-    if(I2CMAXQ < I2C_QUEUE_DEPTH) {
+    if (I2CMAXQ < I2C_QUEUE_DEPTH) {
         for (queueIndex = 0; queueIndex < I2C_QUEUE_DEPTH; queueIndex++) {
             if (i2c_queue[queueIndex].pending == false) {
                 i2c_queue[queueIndex].pending = true;
@@ -259,12 +259,12 @@ i2c_state_t I2C_loadBuffer(unsigned char command, unsigned char* pcommandData, u
                 i2c_queue[queueIndex].pData = ptrxData;
                 i2c_queue[queueIndex].Size = trxSize;
                 i2c_queue[queueIndex].pCallback = pCallback;
+                I2CMAXQ++;
+                return PENDING;
             }
         }
-        I2CMAXQ++;
-        return PENDING;
     }
-    else return false;
+    return false;
 }
 
 i2c_state_t I2C_Write(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, I2C_callbackFunc pCallback) {
@@ -293,9 +293,8 @@ i2c_state_t I2C_Read(unsigned char command, unsigned char* pcommandData, unsigne
     return true;
 }
 
-bool I2C_serve_queue(void) {
+void I2C_serve_queue(void) {
     int queueIndex;
-
     for (queueIndex = 0; queueIndex < I2C_QUEUE_DEPTH; queueIndex++) {
         if (i2c_queue[queueIndex].pending == true) {
             // Send message to I2C
@@ -303,13 +302,9 @@ bool I2C_serve_queue(void) {
                     i2c_queue[queueIndex].rW, i2c_queue[queueIndex].pData, i2c_queue[queueIndex].Size, i2c_queue[queueIndex].pCallback);
             //decrease queue
             I2CMAXQ--;
-            
             i2c_queue[queueIndex].pending = false;
-            return true;
-
         }
     }
-    return false;
 }
 
 inline bool I2C_CheckAvailable(void) {
@@ -419,7 +414,7 @@ void I2C_doneRead(void) {
     if (pI2C_callback != NULL)
         pI2C_callback(true);
     //Check I2C available and buffer not empty
-    if(I2C_CheckAvailable() && (I2CMAXQ < I2C_QUEUE_DEPTH))
+    if(I2CMAXQ < I2C_QUEUE_DEPTH)
         I2C_serve_queue();
 }
 
@@ -460,7 +455,7 @@ void I2C_doneWrite(void) {
     if (pI2C_callback != NULL)
         pI2C_callback(true);
     //Check I2C available and buffer not empty
-    if(I2C_CheckAvailable() && (I2CMAXQ < I2C_QUEUE_DEPTH))
+    if(I2CMAXQ < I2C_QUEUE_DEPTH)
         I2C_serve_queue();
     return;
 }
