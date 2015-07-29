@@ -349,7 +349,7 @@ void I2C_writeCommandData(void) {
     if (I2C_Index >= I2C_command_data_size) {
         I2C_Index = 0; // Reset index into the buffer
 
-        if (I2C_data_size.rx > 0)
+        if (I2C_data_size.rx == I2C_COMMAND_READ)
             I2C_state = &I2C_readStart;
         else
             I2C_state = &I2C_writeData;
@@ -371,8 +371,8 @@ void I2C_readCommand(void) {
 }
 
 void I2C_recen(void) {
-    if (REGISTER_MASK_READ(I2C_STAT, MASK_I2CSTAT_ACKSTAT) == 1) // Device not responding
-    {
+    if (REGISTER_MASK_READ(I2C_STAT, MASK_I2CSTAT_ACKSTAT) == 1) {
+        // Device not responding
         I2C_Failed();
         return;
     } else {
