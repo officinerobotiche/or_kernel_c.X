@@ -58,22 +58,22 @@ extern "C" {
 /* System Function Prototypes                                                 */
 /******************************************************************************/
     /**
-     * Set high value selected hardware bit. Use previus define
+     * Set high value selected hardware bit. Use previous define
      * @param bit_control hardware bit
      */
     inline void bit_high(hardware_bit_t* bit_control);
     /**
-     * Set low value selected hardware bit. Use previus define
+     * Set low value selected hardware bit. Use previous define
      * @param bit_control hardware bit
      */
     inline void bit_low(hardware_bit_t* bit_control);
     /**
-     * Toggle value selected hardware bit. Use previus define
+     * Toggle value selected hardware bit. Use previous define
      * @param bit_control hardware bit
      */
     inline void bit_toggle(hardware_bit_t* bit_control);
     /**
-     * Read value selected hardware bit. Use previus define
+     * Read value selected hardware bit. Use previous define
      * @param bit_control hardware bit
      * @return state of hardware bit
      */

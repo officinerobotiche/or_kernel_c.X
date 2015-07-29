@@ -17,7 +17,12 @@ extern "C" {
 /******************************************************************************/
 /* System Level #define Macros                                                */
 /******************************************************************************/
-
+    typedef enum {
+        FALSE = 0,
+        TRUE = 1,
+        PENDING = 2
+    } i2c_state_t;
+    
     /// callback type for I2C user
     typedef void (*I2C_callbackFunc)(bool);
     
@@ -53,7 +58,7 @@ extern "C" {
      * @param pCallback
      * @return 
      */
-    bool I2C_Write(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, I2C_callbackFunc pCallback);
+    i2c_state_t I2C_Write(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, I2C_callbackFunc pCallback);
     
     /**
      * 
@@ -65,7 +70,7 @@ extern "C" {
      * @param pCallback
      * @return 
      */
-    bool I2C_Write_data(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, unsigned char* ptxData, unsigned int txSize, I2C_callbackFunc pCallback);
+    i2c_state_t I2C_Write_data(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, unsigned char* ptxData, unsigned int txSize, I2C_callbackFunc pCallback);
     
     /**
      * 
@@ -77,7 +82,7 @@ extern "C" {
      * @param pCallback
      * @return 
      */
-    bool I2C_Read(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, unsigned char* prxData, unsigned int rxSize, I2C_callbackFunc pCallback);
+    i2c_state_t I2C_Read(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, unsigned char* prxData, unsigned int rxSize, I2C_callbackFunc pCallback);
 
     /**
      * 

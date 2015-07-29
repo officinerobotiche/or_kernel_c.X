@@ -36,6 +36,9 @@
 
 #define MASK_I2CSTAT_ACKSTAT     BIT_MASK(15)
 
+#define I2C_COMMAND_WRITE 0
+#define I2C_COMMAND_READ 1
+
 /******************************************************************************/
 /* Global Variable Declaration                                                */
 /******************************************************************************/
@@ -221,52 +224,73 @@ bool I2C_checkACK(unsigned int command, I2C_callbackFunc pCallback) {
     return true;
 }
 
-bool I2C_Write(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, I2C_callbackFunc pCallback) {
+void I2C_loadCommand(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, unsigned short rW, unsigned char* ptrxData, unsigned int trxSize, I2C_callbackFunc pCallback) {
+    
+    pI2C_callback = pCallback;
+    I2C_command_data_size = commandDataSize;
+    pI2CcommandBuffer = pcommandData;
+    I2C_CommandByte = command;
+    pI2CBuffer = ptrxData;
+
+    if (rW == I2C_COMMAND_WRITE) {
+        I2C_data_size.tx = trxSize; // tx data size
+        I2C_data_size.rx = 0; // rx data size
+    } else {
+        I2C_data_size.tx = 0; // tx data size
+        I2C_data_size.rx = trxSize; // rx data size
+    }
+
+    // Set ISR callback and trigger the ISR
+    I2C_state = &I2C_startWrite;
+    /// Set high interrupt
+    bit_high(I2C_INTERRUPT);
+}
+
+i2c_state_t I2C_loadBuffer(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, unsigned short rW, unsigned char* ptrxData, unsigned int trxSize, I2C_callbackFunc pCallback) {
+    int queueIndex;
+    if(I2CMAXQ < I2C_QUEUE_DEPTH) {
+        for (queueIndex = 0; queueIndex < I2C_QUEUE_DEPTH; queueIndex++) {
+            if (i2c_queue[queueIndex].pending == false) {
+                i2c_queue[queueIndex].pending = true;
+                i2c_queue[queueIndex].rW = rW;
+                i2c_queue[queueIndex].command = command;
+                i2c_queue[queueIndex].pcommandData = pcommandData;
+                i2c_queue[queueIndex].commandDataSize = commandDataSize;
+                i2c_queue[queueIndex].pData = ptrxData;
+                i2c_queue[queueIndex].Size = trxSize;
+                i2c_queue[queueIndex].pCallback = pCallback;
+            }
+        }
+        I2CMAXQ++;
+        return PENDING;
+    }
+    else return false;
+}
+
+i2c_state_t I2C_Write(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, I2C_callbackFunc pCallback) {
     return I2C_Write_data(command, pcommandData, commandDataSize, NULL, 0, pCallback);
 }
 
-bool I2C_Write_data(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, unsigned char* ptxData, unsigned int txSize, I2C_callbackFunc pCallback) {
-    int queueIndex;
-
-    for (queueIndex = 0; queueIndex < I2C_QUEUE_DEPTH; queueIndex++) {
-        if (i2c_queue[queueIndex].pending == false) {
-            if (queueIndex > I2CMAXQ) I2CMAXQ = queueIndex;
-            i2c_queue[queueIndex].pending = true;
-            i2c_queue[queueIndex].rW = 0;
-            i2c_queue[queueIndex].command = command;
-            i2c_queue[queueIndex].pcommandData = pcommandData;
-            i2c_queue[queueIndex].commandDataSize = commandDataSize;
-            i2c_queue[queueIndex].pData = ptxData;
-            i2c_queue[queueIndex].Size = txSize;
-            i2c_queue[queueIndex].pCallback = pCallback;
-            return I2C_serve_queue();
-        }
+i2c_state_t I2C_Write_data(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, unsigned char* ptxData, unsigned int txSize, I2C_callbackFunc pCallback) {
+    
+    // Try to direct send the message
+    if(I2C_CheckAvailable() && (I2CMAXQ < I2C_QUEUE_DEPTH)) {
+        I2C_loadCommand(command, pcommandData, commandDataSize, I2C_COMMAND_WRITE, ptxData, txSize, pCallback);
+    } else {
+        return I2C_loadBuffer(command, pcommandData, commandDataSize, I2C_COMMAND_WRITE, ptxData, txSize, pCallback);
     }
-    I2C_reset();
-    return false;
+    return true;
 }
 
-bool I2C_Read(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, unsigned char* prxData, unsigned int rxSize, I2C_callbackFunc pCallback) {
-    int queueIndex;
-
-    for (queueIndex = 0; queueIndex < I2C_QUEUE_DEPTH; queueIndex++) {
-        if (i2c_queue[queueIndex].pending == false) {
-            if (queueIndex > I2CMAXQ) I2CMAXQ = queueIndex;
-            i2c_queue[queueIndex].pending = true;
-            i2c_queue[queueIndex].rW = 1;
-            i2c_queue[queueIndex].command = command;
-            i2c_queue[queueIndex].pcommandData = pcommandData;
-            i2c_queue[queueIndex].commandDataSize = commandDataSize;
-            i2c_queue[queueIndex].pData = prxData;
-            i2c_queue[queueIndex].Size = rxSize;
-            i2c_queue[queueIndex].pCallback = pCallback;
-            return I2C_serve_queue();
-        }
+i2c_state_t I2C_Read(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, unsigned char* prxData, unsigned int rxSize, I2C_callbackFunc pCallback) {
+    
+    // Try to direct send the message
+    if(I2C_CheckAvailable() && (I2CMAXQ < I2C_QUEUE_DEPTH)) {
+        I2C_loadCommand(command, pcommandData, commandDataSize, I2C_COMMAND_READ, prxData, rxSize, pCallback);
+    } else {
+        return I2C_loadBuffer(command, pcommandData, commandDataSize, I2C_COMMAND_READ, prxData, rxSize, pCallback);
     }
-
-    I2C_reset();
-    return false;
-
+    return true;
 }
 
 bool I2C_serve_queue(void) {
@@ -274,30 +298,13 @@ bool I2C_serve_queue(void) {
 
     for (queueIndex = 0; queueIndex < I2C_QUEUE_DEPTH; queueIndex++) {
         if (i2c_queue[queueIndex].pending == true) {
-            //I2CMAXS = queueIndex;
-
-            if (!I2C_CheckAvailable()) {
-                return false;
-            } else i2c_queue[queueIndex].pending = false;
-
-            pI2C_callback = i2c_queue[queueIndex].pCallback;
-            I2C_command_data_size = i2c_queue[queueIndex].commandDataSize;
-            pI2CcommandBuffer = i2c_queue[queueIndex].pcommandData;
-            I2C_CommandByte = i2c_queue[queueIndex].command;
-            pI2CBuffer = i2c_queue[queueIndex].pData;
-
-            if (i2c_queue[queueIndex].rW == 0) {
-                I2C_data_size.tx = i2c_queue[queueIndex].Size; // tx data size
-                I2C_data_size.rx = 0; // rx data size
-            } else {
-                I2C_data_size.tx = 0; // tx data size
-                I2C_data_size.rx = i2c_queue[queueIndex].Size; // rx data size
-            }
-
-            // Set ISR callback and trigger the ISR
-            I2C_state = &I2C_startWrite;
-            /// Set high interrupt
-            bit_high(I2C_INTERRUPT);
+            // Send message to I2C
+            I2C_loadCommand(i2c_queue[queueIndex].command, i2c_queue[queueIndex].pcommandData, i2c_queue[queueIndex].commandDataSize, 
+                    i2c_queue[queueIndex].rW, i2c_queue[queueIndex].pData, i2c_queue[queueIndex].Size, i2c_queue[queueIndex].pCallback);
+            //decrease queue
+            I2CMAXQ--;
+            
+            i2c_queue[queueIndex].pending = false;
             return true;
 
         }
@@ -411,8 +418,11 @@ void I2C_doneRead(void) {
     I2C_Busy = false;
     if (pI2C_callback != NULL)
         pI2C_callback(true);
-    I2C_serve_queue();
+    //Check I2C available and buffer not empty
+    if(I2C_CheckAvailable() && (I2CMAXQ < I2C_QUEUE_DEPTH))
+        I2C_serve_queue();
 }
+
 /* WRITE FUNCTIONS */
 
 void I2C_writeData(void) {
@@ -449,7 +459,9 @@ void I2C_doneWrite(void) {
     I2C_Busy = false;
     if (pI2C_callback != NULL)
         pI2C_callback(true);
-    I2C_serve_queue(); //  **** NEW QUEUE FEATURE  *****
+    //Check I2C available and buffer not empty
+    if(I2C_CheckAvailable() && (I2CMAXQ < I2C_QUEUE_DEPTH))
+        I2C_serve_queue();
     return;
 }
 
