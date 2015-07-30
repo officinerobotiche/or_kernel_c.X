@@ -466,12 +466,13 @@ void I2C_rerecen(void) {
  * If the queue is not empty launch other message in queue
  */
 void I2C_doneRead(void) {
-    I2C_Busy = false;
     if (pI2C_callback != NULL)
         pI2C_callback(true);
     //Check I2C available and buffer not empty
-    if(I2CMAXQ < I2C_QUEUE_DEPTH)
+    if(I2CMAXQ > 0)
         I2C_serve_queue();
+    else 
+        I2C_Busy = false;
 }
 
 /* WRITE FUNCTIONS */
@@ -515,13 +516,13 @@ void I2C_writeStop(void) {
  * If the queue is not empty launch other message in queue
  */
 void I2C_doneWrite(void) {
-    I2C_Busy = false;
     if (pI2C_callback != NULL)
         pI2C_callback(true);
     //Check I2C available and buffer not empty
-    if(I2CMAXQ < I2C_QUEUE_DEPTH)
+    if(I2CMAXQ > 0)
         I2C_serve_queue();
-    return;
+    else
+        I2C_Busy = false;
 }
 
 /* SERVICE FUNCTIONS */
@@ -538,9 +539,13 @@ void I2C_idle(void) {
 void I2C_Failed(void) {
     I2C_state = &I2C_idle;
     REGISTER_MASK_SET_HIGH(I2C_CON, MASK_I2CCON_PEN);
-    I2C_Busy = false;
     if (pI2C_callback != NULL)
         pI2C_callback(false);
+    //Check I2C available and buffer not empty
+    if(I2CMAXQ > 0)
+        I2C_serve_queue();
+    else
+        I2C_Busy = false;
 }
 /**
  * Status of I2C
