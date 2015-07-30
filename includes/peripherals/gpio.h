@@ -27,8 +27,10 @@ extern "C" {
 /******************************************************************************/
 /* System Level #define Macros                                                */
 /******************************************************************************/
+    //Rule of thumb: Always read inputs from PORTx and write outputs to LATx. 
+    //If you need to read what you set an output to, read LATx.
     /// Port builder
-    #define GPIO_DEF(LETTER_PORT) _TRIS##LETTER_PORT; \ _PORT##LETTER_PORT;
+    #define GPIO(x) _TRIS##x; \ _PORT##x; \ _LAT##x;
     
     /// Build a Max bit in x position
     #define BIT_MASK(x)                       (1 << (x))
