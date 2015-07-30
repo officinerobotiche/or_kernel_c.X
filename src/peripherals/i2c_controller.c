@@ -257,11 +257,8 @@ void I2C_loadCommand(unsigned char command, unsigned char* pcommandData, unsigne
         I2C_data_size.tx = 0; // tx data size
         I2C_data_size.rx = trxSize; // rx data size
     }
-
     // Set ISR callback and trigger the ISR
     I2C_state = &I2C_startWrite;
-    /// Set high interrupt
-    bit_high(I2C_INTERRUPT);
 }
 /**
  * Load in buffer the message with additional data
@@ -300,10 +297,12 @@ i2c_state_t I2C_Write(unsigned char command, unsigned char* pcommandData, unsign
 }
 
 i2c_state_t I2C_Write_data(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, unsigned char* ptxData, unsigned int txSize, I2C_callbackFunc pCallback) {
-    
+
     // Try to direct send the message
-    if(I2C_CheckAvailable() && (I2CMAXQ < I2C_QUEUE_DEPTH)) {
+    if (I2C_CheckAvailable() && (I2CMAXQ < I2C_QUEUE_DEPTH)) {
         I2C_loadCommand(command, pcommandData, commandDataSize, I2C_COMMAND_WRITE, ptxData, txSize, pCallback);
+        /// Set high interrupt
+        bit_high(I2C_INTERRUPT);
     } else {
         return I2C_loadBuffer(command, pcommandData, commandDataSize, I2C_COMMAND_WRITE, ptxData, txSize, pCallback);
     }
@@ -311,10 +310,12 @@ i2c_state_t I2C_Write_data(unsigned char command, unsigned char* pcommandData, u
 }
 
 i2c_state_t I2C_Read(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, unsigned char* prxData, unsigned int rxSize, I2C_callbackFunc pCallback) {
-    
+
     // Try to direct send the message
-    if(I2C_CheckAvailable() && (I2CMAXQ < I2C_QUEUE_DEPTH)) {
+    if (I2C_CheckAvailable() && (I2CMAXQ < I2C_QUEUE_DEPTH)) {
         I2C_loadCommand(command, pcommandData, commandDataSize, I2C_COMMAND_READ, prxData, rxSize, pCallback);
+        /// Set high interrupt
+        bit_high(I2C_INTERRUPT);
     } else {
         return I2C_loadBuffer(command, pcommandData, commandDataSize, I2C_COMMAND_READ, prxData, rxSize, pCallback);
     }
