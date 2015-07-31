@@ -21,8 +21,10 @@
 #ifdef	__cplusplus
 extern "C" {
 #endif
-    
-#include <stdbool.h>         /* For true/false definition                     */
+
+#include <stdint.h>        /* Includes uint16_t definition                    */
+#include <stdbool.h>       /* Includes true/false definition                  */
+#include <string.h>
 
 /******************************************************************************/
 /* System Level #define Macros                                                */
@@ -56,38 +58,38 @@ extern "C" {
         REGISTER CS_PORT;
         unsigned int CS_mask;
     } hardware_bit_t;
+    
+    typedef int16_t GPIO_PORT_T;
+    
+    typedef enum {
+        READ,
+        WRITE,
+        ANALOG
+    } gpio_type_t;
+    
+    typedef struct _gpio {
+        REGISTER CS_TRIS;
+        REGISTER CS_PORT;
+        REGISTER CS_LAT;
+        unsigned int CS_mask;
+        gpio_type_t type;
+    } gpio_t;
 /******************************************************************************/
 /* System Function Prototypes                                                 */
 /******************************************************************************/
     
     /**
      * 
+     * @return 
+     */
+    GPIO_PORT_T gpio_get(void);
+    
+    /**
+     * 
      * @param port
      * @return 
      */
-    bool gpio_set(int port);
-    
-    /**
-     * Set high value selected hardware bit. Use previous define
-     * @param bit_control hardware bit
-     */
-    inline void bit_high(hardware_bit_t* bit_control);
-    /**
-     * Set low value selected hardware bit. Use previous define
-     * @param bit_control hardware bit
-     */
-    inline void bit_low(hardware_bit_t* bit_control);
-    /**
-     * Toggle value selected hardware bit. Use previous define
-     * @param bit_control hardware bit
-     */
-    inline void bit_toggle(hardware_bit_t* bit_control);
-    /**
-     * Read value selected hardware bit. Use previous define
-     * @param bit_control hardware bit
-     * @return state of hardware bit
-     */
-    inline bool bit_read(hardware_bit_t* bit_control);
+    void gpio_set(GPIO_PORT_T port);
 
 #ifdef	__cplusplus
 }

@@ -25,29 +25,57 @@
 /* Global Variable Declaration                                                */
 /******************************************************************************/
 
+gpio_t* GPIO_PORTS;
+size_t LEN;
+unsigned short counter_size = 0;
 
 /*****************************************************************************/
 /* Communication Functions                                                   */
 /*****************************************************************************/
 
-bool gpio_set(int port) {
-    return true;
+void gpio_init(gpio_t* gpio, size_t len) {
+    GPIO_PORTS = gpio;
+    LEN = len;
 }
 
-inline void bit_high(hardware_bit_t* bit_control) {
-    REGISTER_MASK_SET_HIGH(bit_control->CS_PORT, bit_control->CS_mask);
+void gpio_register(gpio_t* port) {
+    switch(port->type) {
+        case READ:
+            REGISTER_MASK_SET_LOW(port->CS_TRIS, port->CS_mask);
+            break;
+        case WRITE:
+            REGISTER_MASK_SET_HIGH(port->CS_TRIS, port->CS_mask);
+            break;
+        case ANALOG:
+            break;
+    }
+    //GPIO_PORTS[size] = port;
+    counter_size++;
 }
 
-inline void bit_low(hardware_bit_t* bit_control) {
-    REGISTER_MASK_SET_LOW(bit_control->CS_PORT, bit_control->CS_mask);
+GPIO_PORT_T gpio_get(void) {
+    GPIO_PORT_T port;
+    int i;
+    for (i = 0; i < LEN; ++i) {
+        switch (GPIO_PORTS[i].type) {
+            case READ:
+                port = 0;
+                break;
+            case WRITE:
+
+                break;
+            case ANALOG:
+                break;
+        }
+    }
+    return port;
 }
 
-inline void bit_toggle(hardware_bit_t* bit_control) {
-    REGISTER_MASK_TOGGLE(bit_control->CS_PORT, bit_control->CS_mask);
-}
-
-inline bool bit_read(hardware_bit_t* bit_control) {
-    // 1. (byte & mask) >> num
-    // 2. ( byte >> bitnum) & 0xFE
-    return REGISTER_MASK_READ(bit_control->CS_PORT, bit_control->CS_mask);
+void gpio_set(GPIO_PORT_T port) {
+    int i;
+    for(i = 0; i < LEN; ++i) {
+        if(GPIO_PORTS[i].type == WRITE) {
+            
+        }
+    }
 }
