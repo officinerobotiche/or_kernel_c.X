@@ -32,7 +32,14 @@ extern "C" {
     //Rule of thumb: Always read inputs from PORTx and write outputs to LATx. 
     //If you need to read what you set an output to, read LATx.
     /// Port builder
-    #define GPIO_INIT(x, n, type)             {&(TRIS##x), &(PORT##x), &(LAT##x), BIT_MASK(n), (type)}
+    //#define GPIO_INIT(x, n, type)             {&(TRIS##x), &(PORT##x), &(LAT##x), BIT_MASK(n), (type)}
+    #define GPIO_INIT_TYPE(array, x, n, type_n)  \
+                (array).CS_TRIS = &(TRIS##x);    \
+                (array).CS_PORT = &(PORT##x);    \
+                (array).CS_LAT = &(LAT##x);      \
+                (array).CS_mask = BIT_MASK((n)); \
+                (array).type = (type_n)
+    #define GPIO_INIT(array, x, n)  GPIO_INIT_TYPE(array, x, n, GPIO_READ)
     
     /// Build a Max bit in x position
     #define BIT_MASK(x)                       (1 << (x))
@@ -55,7 +62,7 @@ extern "C" {
      * Mask with selected bit
      */
     typedef struct _hardware_bit {
-        REGISTER CS_PORT;
+        REGISTER REG;
         unsigned int CS_mask;
     } hardware_bit_t;
     

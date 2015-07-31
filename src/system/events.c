@@ -114,7 +114,7 @@ void init_events(REGISTER timer_register, REGISTER pr_timer) {
 
 void register_interrupt(eventPriority priority, hardware_bit_t* pin) {
     interrupts[priority].interrupt_bit = pin;
-    REGISTER_MASK_SET_LOW(interrupts[priority].interrupt_bit->CS_PORT, interrupts[priority].interrupt_bit->CS_mask);
+    REGISTER_MASK_SET_LOW(interrupts[priority].interrupt_bit->REG, interrupts[priority].interrupt_bit->CS_mask);
     interrupts[priority].available = true;
     event_counter++;
 }
@@ -129,7 +129,7 @@ void trigger_event_data(hEvent_t hEvent, int argc, int *argv) {
             events[hEvent].eventPending = TRUE;
             events[hEvent].argc = argc;
             events[hEvent].argv = argv;
-            REGISTER_MASK_SET_HIGH(interrupts[events[hEvent].priority].interrupt_bit->CS_PORT, interrupts[events[hEvent].priority].interrupt_bit->CS_mask);
+            REGISTER_MASK_SET_HIGH(interrupts[events[hEvent].priority].interrupt_bit->REG, interrupts[events[hEvent].priority].interrupt_bit->CS_mask);
         }
     }
 }

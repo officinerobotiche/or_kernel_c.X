@@ -187,7 +187,7 @@ void I2C_load(void) {
     
     REGISTER_MASK_SET_HIGH(I2C_CON, MASK_I2CCON_EN);
     /// Set low interrupt
-    REGISTER_MASK_SET_LOW(I2C_INTERRUPT->CS_PORT, I2C_INTERRUPT->CS_mask);
+    REGISTER_MASK_SET_LOW(I2C_INTERRUPT->REG, I2C_INTERRUPT->CS_mask);
     
     /// Set available
     I2C_Busy = false;
@@ -228,7 +228,7 @@ bool I2C_checkACK(unsigned int command, I2C_callbackFunc pCallback) {
     // Set ISR callback and trigger the ISR
     I2C_state = &I2C_startWrite;
     /// Set high interrupt
-    REGISTER_MASK_SET_HIGH(I2C_INTERRUPT->CS_PORT, I2C_INTERRUPT->CS_mask);
+    REGISTER_MASK_SET_HIGH(I2C_INTERRUPT->REG, I2C_INTERRUPT->CS_mask);
     return true;
 }
 /**
@@ -302,7 +302,7 @@ i2c_state_t I2C_Write_data(unsigned char command, unsigned char* pcommandData, u
     if (I2C_CheckAvailable() && (I2CMAXQ < I2C_QUEUE_DEPTH)) {
         I2C_loadCommand(command, pcommandData, commandDataSize, I2C_COMMAND_WRITE, ptxData, txSize, pCallback);
         /// Set high interrupt
-        REGISTER_MASK_SET_HIGH(I2C_INTERRUPT->CS_PORT, I2C_INTERRUPT->CS_mask);
+        REGISTER_MASK_SET_HIGH(I2C_INTERRUPT->REG, I2C_INTERRUPT->CS_mask);
     } else {
         return I2C_loadBuffer(command, pcommandData, commandDataSize, I2C_COMMAND_WRITE, ptxData, txSize, pCallback);
     }
@@ -315,7 +315,7 @@ i2c_state_t I2C_Read(unsigned char command, unsigned char* pcommandData, unsigne
     if (I2C_CheckAvailable() && (I2CMAXQ < I2C_QUEUE_DEPTH)) {
         I2C_loadCommand(command, pcommandData, commandDataSize, I2C_COMMAND_READ, prxData, rxSize, pCallback);
         /// Set high interrupt
-        REGISTER_MASK_SET_HIGH(I2C_INTERRUPT->CS_PORT, I2C_INTERRUPT->CS_mask);
+        REGISTER_MASK_SET_HIGH(I2C_INTERRUPT->REG, I2C_INTERRUPT->CS_mask);
     } else {
         return I2C_loadBuffer(command, pcommandData, commandDataSize, I2C_COMMAND_READ, prxData, rxSize, pCallback);
     }

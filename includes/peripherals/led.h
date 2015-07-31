@@ -46,7 +46,7 @@ extern "C" {
      *      -# n number of blink
      */
     typedef struct led_control {
-        hardware_bit_t* pin;
+        gpio_t gpio;
         unsigned int counter;
         unsigned int fr_blink;
         unsigned int wait;

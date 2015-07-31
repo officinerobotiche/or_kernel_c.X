@@ -27,7 +27,6 @@
 
 gpio_t* GPIO_PORTS;
 size_t LEN;
-unsigned short counter_size = 0;
 
 /*****************************************************************************/
 /* Communication Functions                                                   */
@@ -36,6 +35,10 @@ unsigned short counter_size = 0;
 void gpio_init(gpio_t* gpio, size_t len) {
     GPIO_PORTS = gpio;
     LEN = len;
+    int i;
+    for(i = 0; i < LEN; ++i) {
+        gpio_register(&GPIO_PORTS[i]);
+    }
 }
 
 void gpio_register(gpio_t* port) {
@@ -49,8 +52,6 @@ void gpio_register(gpio_t* port) {
         case GPIO_ANALOG:
             break;
     }
-    //GPIO_PORTS[counter_size] = port;
-    counter_size++;
 }
 
 GPIO_PORT_T gpio_get(void) {
