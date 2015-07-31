@@ -40,31 +40,33 @@ void gpio_init(gpio_t* gpio, size_t len) {
 
 void gpio_register(gpio_t* port) {
     switch(port->type) {
-        case READ:
+        case GPIO_READ:
             REGISTER_MASK_SET_LOW(port->CS_TRIS, port->CS_mask);
             break;
-        case WRITE:
+        case GPIO_WRITE:
             REGISTER_MASK_SET_HIGH(port->CS_TRIS, port->CS_mask);
             break;
-        case ANALOG:
+        case GPIO_ANALOG:
             break;
     }
-    //GPIO_PORTS[size] = port;
+    //GPIO_PORTS[counter_size] = port;
     counter_size++;
 }
 
 GPIO_PORT_T gpio_get(void) {
-    GPIO_PORT_T port;
+    GPIO_PORT_T port = 0;
     int i;
     for (i = 0; i < LEN; ++i) {
         switch (GPIO_PORTS[i].type) {
-            case READ:
-                port = 0;
+            case GPIO_READ:
+                if(REGISTER_MASK_READ(GPIO_PORTS[i].CS_PORT, GPIO_PORTS[i].CS_mask))
+                    port += BIT_MASK(i);
                 break;
-            case WRITE:
-
+            case GPIO_WRITE:
+                if(REGISTER_MASK_READ(GPIO_PORTS[i].CS_LAT, GPIO_PORTS[i].CS_mask))
+                    port += BIT_MASK(i);
                 break;
-            case ANALOG:
+            default:
                 break;
         }
     }
@@ -74,7 +76,7 @@ GPIO_PORT_T gpio_get(void) {
 void gpio_set(GPIO_PORT_T port) {
     int i;
     for(i = 0; i < LEN; ++i) {
-        if(GPIO_PORTS[i].type == WRITE) {
+        if(GPIO_PORTS[i].type == GPIO_WRITE) {
             
         }
     }

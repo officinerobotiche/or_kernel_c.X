@@ -32,7 +32,7 @@ extern "C" {
     //Rule of thumb: Always read inputs from PORTx and write outputs to LATx. 
     //If you need to read what you set an output to, read LATx.
     /// Port builder
-    #define GPIO_PORT(x) _TRIS##x; \ _PORT##x; \ _LAT##x;
+    #define GPIO_INIT(x, n, type)             {&(TRIS##x), &(PORT##x), &(LAT##x), BIT_MASK(n), (type)}
     
     /// Build a Max bit in x position
     #define BIT_MASK(x)                       (1 << (x))
@@ -62,9 +62,9 @@ extern "C" {
     typedef int16_t GPIO_PORT_T;
     
     typedef enum {
-        READ,
-        WRITE,
-        ANALOG
+        GPIO_READ,
+        GPIO_WRITE,
+        GPIO_ANALOG
     } gpio_type_t;
     
     typedef struct _gpio {
@@ -78,6 +78,17 @@ extern "C" {
 /* System Function Prototypes                                                 */
 /******************************************************************************/
     
+    /**
+     * 
+     * @param gpio
+     * @param len
+     */
+    void gpio_init(gpio_t* gpio, size_t len);
+    /**
+     * 
+     * @param port
+     */
+    void gpio_register(gpio_t* port);
     /**
      * 
      * @return 
