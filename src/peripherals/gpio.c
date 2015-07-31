@@ -29,6 +29,11 @@
 /*****************************************************************************/
 /* Communication Functions                                                   */
 /*****************************************************************************/
+
+bool gpio_set(int port) {
+    return true;
+}
+
 inline void bit_high(hardware_bit_t* bit_control) {
     REGISTER_MASK_SET_HIGH(bit_control->CS_PORT, bit_control->CS_mask);
 }
