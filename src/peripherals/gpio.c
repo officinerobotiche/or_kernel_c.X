@@ -48,10 +48,10 @@ void gpio_register(gpio_t* port) {
 void gpio_register_analog(gpio_t* port, int mask_analog) {
     switch(port->type) {
         case GPIO_READ:
-            REGISTER_MASK_SET_LOW(port->CS_TRIS, port->CS_mask);
+            REGISTER_MASK_SET_HIGH(port->CS_TRIS, port->CS_mask);
             break;
         case GPIO_WRITE:
-            REGISTER_MASK_SET_HIGH(port->CS_TRIS, port->CS_mask);
+            REGISTER_MASK_SET_LOW(port->CS_TRIS, port->CS_mask);
             break;
         case GPIO_ANALOG:
             break;
