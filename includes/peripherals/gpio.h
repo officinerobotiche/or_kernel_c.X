@@ -39,7 +39,7 @@ extern "C" {
                 (array).CS_LAT = &(LAT##x);      \
                 (array).CS_mask = BIT_MASK((n)); \
                 (array).type = (type_n)
-    #define GPIO_INIT(array, x, n)  GPIO_INIT_TYPE(array, x, n, GPIO_READ)
+    #define GPIO_INIT(array, x, n)  GPIO_INIT_TYPE(array, x, n, GPIO_INPUT)
     
     /// Build a Max bit in x position
     #define BIT_MASK(x)                       (1 << (x))
@@ -69,8 +69,8 @@ extern "C" {
     typedef int16_t GPIO_PORT_T;
     
     typedef enum {
-        GPIO_READ,
-        GPIO_WRITE,
+        GPIO_INPUT,
+        GPIO_OUTPUT,
         GPIO_ANALOG
     } gpio_type_t;
     

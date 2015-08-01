@@ -47,10 +47,10 @@ void gpio_register(gpio_t* port) {
 
 void gpio_register_analog(gpio_t* port, int mask_analog) {
     switch(port->type) {
-        case GPIO_READ:
+        case GPIO_INPUT:
             REGISTER_MASK_SET_HIGH(port->CS_TRIS, port->CS_mask);
             break;
-        case GPIO_WRITE:
+        case GPIO_OUTPUT:
             REGISTER_MASK_SET_LOW(port->CS_TRIS, port->CS_mask);
             break;
         case GPIO_ANALOG:
@@ -63,11 +63,11 @@ GPIO_PORT_T gpio_get(void) {
     int i;
     for (i = 0; i < LEN; ++i) {
         switch (GPIO_PORTS[i].type) {
-            case GPIO_READ:
+            case GPIO_INPUT:
                 if(REGISTER_MASK_READ(GPIO_PORTS[i].CS_PORT, GPIO_PORTS[i].CS_mask))
                     port += BIT_MASK(i);
                 break;
-            case GPIO_WRITE:
+            case GPIO_OUTPUT:
                 if(REGISTER_MASK_READ(GPIO_PORTS[i].CS_LAT, GPIO_PORTS[i].CS_mask))
                     port += BIT_MASK(i);
                 break;
@@ -81,7 +81,7 @@ GPIO_PORT_T gpio_get(void) {
 void gpio_set(GPIO_PORT_T port) {
     int i;
     for(i = 0; i < LEN; ++i) {
-        if(GPIO_PORTS[i].type == GPIO_WRITE) {
+        if(GPIO_PORTS[i].type == GPIO_OUTPUT) {
             if(REGISTER_MASK_READ(&port, BIT_MASK(i))) {
                 REGISTER_MASK_SET_HIGH(GPIO_PORTS[i].CS_LAT, GPIO_PORTS[i].CS_mask);
             } else {
