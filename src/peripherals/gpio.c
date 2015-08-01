@@ -32,7 +32,7 @@ size_t LEN;
 /* Communication Functions                                                   */
 /*****************************************************************************/
 
-void gpio_init(gpio_t* gpio, size_t len) {
+void gpio_init(REGISTER analog, gpio_t* gpio, size_t len) {
     GPIO_PORTS = gpio;
     LEN = len;
     int i;
@@ -42,6 +42,10 @@ void gpio_init(gpio_t* gpio, size_t len) {
 }
 
 void gpio_register(gpio_t* port) {
+    gpio_register_analog(port, -1);
+}
+
+void gpio_register_analog(gpio_t* port, int mask_analog) {
     switch(port->type) {
         case GPIO_READ:
             REGISTER_MASK_SET_LOW(port->CS_TRIS, port->CS_mask);
@@ -78,7 +82,11 @@ void gpio_set(GPIO_PORT_T port) {
     int i;
     for(i = 0; i < LEN; ++i) {
         if(GPIO_PORTS[i].type == GPIO_WRITE) {
-            
+            if(REGISTER_MASK_READ(&port, BIT_MASK(i))) {
+                REGISTER_MASK_SET_HIGH(GPIO_PORTS[i].CS_LAT, GPIO_PORTS[i].CS_mask);
+            } else {
+                REGISTER_MASK_SET_LOW(GPIO_PORTS[i].CS_LAT, GPIO_PORTS[i].CS_mask);
+            }
         }
     }
 }

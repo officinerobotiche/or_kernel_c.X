@@ -90,12 +90,18 @@ extern "C" {
      * @param gpio
      * @param len
      */
-    void gpio_init(gpio_t* gpio, size_t len);
+    void gpio_init(REGISTER analog, gpio_t* gpio, size_t len);
     /**
      * 
      * @param port
      */
     void gpio_register(gpio_t* port);
+    /**
+     * 
+     * @param port
+     * @param mask_analog
+     */
+    void gpio_register_analog(gpio_t* port, int mask_analog);
     /**
      * 
      * @return 
