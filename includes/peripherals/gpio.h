@@ -133,11 +133,6 @@ extern "C" {
      * 
      * @param port
      */
-    void gpio_setup(short number, gpio_type_t type);
-    /**
-     * 
-     * @param port
-     */
     void gpio_register(gpio_t* port);
     /**
      * 
@@ -146,10 +141,16 @@ extern "C" {
     void gpio_register_peripheral(gp_peripheral_t* port);
     /**
      * 
+     * @param port
+     * @param type
+     */
+    void gpio_setup(gpio_port_t port, gpio_type_t type);
+    /**
+     * 
      * @param gpioIdx
      * @return 
      */
-    int gpio_get_analog(int gpioIdx);
+    int gpio_get_analog(short gpioIdx);
     /**
      * 
      * @return 

@@ -40,6 +40,8 @@ void gpio_init(REGISTER analog, gp_peripheral_t* gpio, size_t len) {
     int i;
     for(i = 0; i < LEN; ++i) {
         gpio_register_peripheral(&GPIO_PORTS[i]);
+        GPIO_PORTS[i].common.analog = GPIO_NO_PERIPHERAL;
+        GPIO_PORTS[i].common.generic = GPIO_NO_PERIPHERAL;
     }
 }
 
@@ -80,12 +82,21 @@ void gpio_register_peripheral(gp_peripheral_t* port) {
     }
 }
 
-void gpio_setup(short number, gpio_type_t type) {
-    GPIO_PORTS[number].gpio.type = type;
-    gpio_register_peripheral(&GPIO_PORTS[number]);
+void gpio_setup_pin(short gpioIdx, gpio_type_t type) {
+    GPIO_PORTS[gpioIdx].gpio.type = type;
+    gpio_register_peripheral(&GPIO_PORTS[gpioIdx]);
 }
 
-int gpio_get_analog(int gpioIdx) {
+void gpio_setup(gpio_port_t port, gpio_type_t type) {
+    int i;
+    for (i = 0; i < LEN; ++i) {
+        if(REGISTER_MASK_READ(&port, BIT_MASK(i))) {
+            gpio_setup_pin(i, type);
+        }
+    }
+}
+
+int gpio_get_analog(short gpioIdx) {
     if(GPIO_PORTS[gpioIdx].gpio.type == GPIO_ANALOG) {
         return GPIO_PORTS[gpioIdx].common.analog->value;
     } else
