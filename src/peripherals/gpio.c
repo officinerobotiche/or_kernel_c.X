@@ -40,8 +40,6 @@ void gpio_init(REGISTER analog, gp_peripheral_t* gpio, size_t len) {
     int i;
     for(i = 0; i < LEN; ++i) {
         gpio_register_peripheral(&GPIO_PORTS[i]);
-        GPIO_PORTS[i].common.analog = GPIO_NO_PERIPHERAL;
-        GPIO_PORTS[i].common.generic = GPIO_NO_PERIPHERAL;
     }
 }
 
