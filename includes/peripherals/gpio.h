@@ -32,7 +32,7 @@ extern "C" {
     
     /// Build a Max bit in x position
     #define BIT_MASK(x)                       (1 << (x))
-    
+    #define GPIO_NO_ANALOG 0xFF
     //Rule of thumb: Always read inputs from PORTx and write outputs to LATx. 
     //If you need to read what you set an output to, read LATx.
     /// Port builder
@@ -45,7 +45,7 @@ extern "C" {
                 (array).type = (type_n);
     /// Simple initialization a GPIO
     #define GPIO_INIT(array, x, n)  GPIO_INIT_TYPE((array).gpio, x, n, GPIO_INPUT)  \
-                                        (array).analog = -1;
+                                        (array).analog = GPIO_NO_ANALOG;
     /// Initialization with analog
     #define GPIO_INIT_ANALOG(array, x, n, an) GPIO_INIT_TYPE((array).gpio, x, n, GPIO_INPUT) \
                                                 (array).analog = (an);
@@ -99,7 +99,7 @@ extern "C" {
     typedef struct _gp_peripheral {
         gpio_t gpio;
         hardware_bit_t* peripheral;
-        int analog;
+        unsigned short analog;
     } gp_peripherals_t;
     
 /******************************************************************************/

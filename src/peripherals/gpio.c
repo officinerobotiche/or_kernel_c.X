@@ -59,13 +59,13 @@ void gpio_register(gpio_t* port) {
 void gpio_register_peripheral(gp_peripherals_t* port) {
     switch(port->gpio.type) {
         case GPIO_INPUT:
-            if(port->analog != -1) {
+            if(port->analog != GPIO_NO_ANALOG) {
                 REGISTER_MASK_SET_HIGH(ANALOG, BIT_MASK(port->analog));
             }
             REGISTER_MASK_SET_HIGH(port->gpio.CS_TRIS, port->gpio.CS_mask);
             break;
         case GPIO_OUTPUT:
-            if(port->analog != -1) {
+            if(port->analog != GPIO_NO_ANALOG) {
                 REGISTER_MASK_SET_HIGH(ANALOG, BIT_MASK(port->analog));
             }
             REGISTER_MASK_SET_LOW(port->gpio.CS_TRIS, port->gpio.CS_mask);
@@ -73,7 +73,7 @@ void gpio_register_peripheral(gp_peripherals_t* port) {
         case GPIO_ANALOG:
             REGISTER_MASK_SET_HIGH(port->gpio.CS_TRIS, port->gpio.CS_mask);
             // Set analog the device
-            if(port->analog != -1) {
+            if(port->analog != GPIO_NO_ANALOG) {
                 REGISTER_MASK_SET_LOW(ANALOG, BIT_MASK(port->analog));
             }
             break;
