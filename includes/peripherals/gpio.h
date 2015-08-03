@@ -32,7 +32,11 @@ extern "C" {
     
     /// Build a Max bit in x position
     #define BIT_MASK(x)                       (1 << (x))
-    #define GPIO_NO_ANALOG 0xFF
+    #define GPIO_NO_PERIPHERAL NULL
+    #define GPIO_ANALOG_CONF(array, an) \
+                (array).number = (an);  \
+                (array).value = 0;
+
     //Rule of thumb: Always read inputs from PORTx and write outputs to LATx. 
     //If you need to read what you set an output to, read LATx.
     /// Port builder
@@ -45,10 +49,10 @@ extern "C" {
                 (array).type = (type_n);
     /// Simple initialization a GPIO
     #define GPIO_INIT(array, x, n)  GPIO_INIT_TYPE((array).gpio, x, n, GPIO_INPUT)  \
-                                        (array).analog = GPIO_NO_ANALOG;
+                                        (array).common.analog = GPIO_NO_PERIPHERAL
     /// Initialization with analog
-    #define GPIO_INIT_ANALOG(array, x, n, an) GPIO_INIT_TYPE((array).gpio, x, n, GPIO_INPUT) \
-                                                (array).analog = (an);
+    #define GPIO_INIT_ANALOG(array, x, n, an) GPIO_INIT_TYPE((array).gpio, x, n, GPIO_INPUT)
+    //                                            GPIO_ANALOG_CONF((array).common->analog.number, an)
     /// Initialize hardware_bit_t with name register and bit mask
     #define REGISTER_INIT(reg, x)             {&(reg), BIT_MASK(x)}
 
@@ -96,11 +100,24 @@ extern "C" {
     /**
      * 
      */
+    typedef struct _gp_analog {
+        unsigned short number;
+        int value;
+    } gp_analog_t;
+    /**
+     * 
+     */
+    typedef union _gp_common {
+        gp_analog_t* analog;
+        hardware_bit_t* generic;
+    } gp_common_t;
+    /**
+     * 
+     */
     typedef struct _gp_peripheral {
         gpio_t gpio;
-        hardware_bit_t* peripheral;
-        unsigned short analog;
-    } gp_peripherals_t;
+        gp_common_t common;
+    } gp_peripheral_t;
     
 /******************************************************************************/
 /* System Function Prototypes                                                 */
@@ -111,7 +128,7 @@ extern "C" {
      * @param gpio
      * @param len
      */
-    void gpio_init(REGISTER analog, gp_peripherals_t* gpio, size_t len);
+    void gpio_init(REGISTER analog, gp_peripheral_t* gpio, size_t len);
     /**
      * 
      * @param port
@@ -121,7 +138,7 @@ extern "C" {
      * 
      * @param port
      */
-    void gpio_register_peripheral(gp_peripherals_t* port);
+    void gpio_register_peripheral(gp_peripheral_t* port);
     /**
      * 
      * @return 

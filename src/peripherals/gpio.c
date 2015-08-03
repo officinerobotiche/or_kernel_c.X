@@ -26,14 +26,14 @@
 /******************************************************************************/
 
 REGISTER ANALOG;
-gp_peripherals_t* GPIO_PORTS;
+gp_peripheral_t* GPIO_PORTS;
 size_t LEN;
 
 /*****************************************************************************/
 /* Communication Functions                                                   */
 /*****************************************************************************/
 
-void gpio_init(REGISTER analog, gp_peripherals_t* gpio, size_t len) {
+void gpio_init(REGISTER analog, gp_peripheral_t* gpio, size_t len) {
     GPIO_PORTS = gpio;
     ANALOG = analog;
     LEN = len;
@@ -56,25 +56,25 @@ void gpio_register(gpio_t* port) {
     }
 }
 
-void gpio_register_peripheral(gp_peripherals_t* port) {
+void gpio_register_peripheral(gp_peripheral_t* port) {
     switch(port->gpio.type) {
         case GPIO_INPUT:
-            if(port->analog != GPIO_NO_ANALOG) {
-                REGISTER_MASK_SET_HIGH(ANALOG, BIT_MASK(port->analog));
+            if(port->common.analog != GPIO_NO_PERIPHERAL) {
+                REGISTER_MASK_SET_HIGH(ANALOG, BIT_MASK(port->common.analog->number));
             }
             REGISTER_MASK_SET_HIGH(port->gpio.CS_TRIS, port->gpio.CS_mask);
             break;
         case GPIO_OUTPUT:
-            if(port->analog != GPIO_NO_ANALOG) {
-                REGISTER_MASK_SET_HIGH(ANALOG, BIT_MASK(port->analog));
+            if(port->common.analog != GPIO_NO_PERIPHERAL) {
+                REGISTER_MASK_SET_HIGH(ANALOG, BIT_MASK(port->common.analog->number));
             }
             REGISTER_MASK_SET_LOW(port->gpio.CS_TRIS, port->gpio.CS_mask);
             break;
         case GPIO_ANALOG:
             REGISTER_MASK_SET_HIGH(port->gpio.CS_TRIS, port->gpio.CS_mask);
             // Set analog the device
-            if(port->analog != GPIO_NO_ANALOG) {
-                REGISTER_MASK_SET_LOW(ANALOG, BIT_MASK(port->analog));
+            if(port->common.analog != GPIO_NO_PERIPHERAL) {
+                REGISTER_MASK_SET_LOW(ANALOG, BIT_MASK(port->common.analog->number));
             }
             break;
     }
