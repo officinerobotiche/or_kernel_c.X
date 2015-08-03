@@ -25,27 +25,25 @@
 /* Global Variable Declaration                                                */
 /******************************************************************************/
 
-gpio_t* GPIO_PORTS;
+REGISTER ANALOG;
+gp_peripherals_t* GPIO_PORTS;
 size_t LEN;
 
 /*****************************************************************************/
 /* Communication Functions                                                   */
 /*****************************************************************************/
 
-void gpio_init(REGISTER analog, gpio_t* gpio, size_t len) {
+void gpio_init(REGISTER analog, gp_peripherals_t* gpio, size_t len) {
     GPIO_PORTS = gpio;
+    ANALOG = analog;
     LEN = len;
     int i;
     for(i = 0; i < LEN; ++i) {
-        gpio_register(&GPIO_PORTS[i]);
+        gpio_register_peripheral(&GPIO_PORTS[i]);
     }
 }
 
 void gpio_register(gpio_t* port) {
-    gpio_register_analog(port, -1);
-}
-
-void gpio_register_analog(gpio_t* port, int mask_analog) {
     switch(port->type) {
         case GPIO_INPUT:
             REGISTER_MASK_SET_HIGH(port->CS_TRIS, port->CS_mask);
@@ -53,22 +51,53 @@ void gpio_register_analog(gpio_t* port, int mask_analog) {
         case GPIO_OUTPUT:
             REGISTER_MASK_SET_LOW(port->CS_TRIS, port->CS_mask);
             break;
-        case GPIO_ANALOG:
+        default:
             break;
     }
 }
 
-GPIO_PORT_T gpio_get(void) {
-    GPIO_PORT_T port = 0;
+void gpio_register_peripheral(gp_peripherals_t* port) {
+    switch(port->gpio.type) {
+        case GPIO_INPUT:
+            if(port->analog != -1) {
+                REGISTER_MASK_SET_HIGH(ANALOG, BIT_MASK(port->analog));
+            }
+            REGISTER_MASK_SET_HIGH(port->gpio.CS_TRIS, port->gpio.CS_mask);
+            break;
+        case GPIO_OUTPUT:
+            if(port->analog != -1) {
+                REGISTER_MASK_SET_HIGH(ANALOG, BIT_MASK(port->analog));
+            }
+            REGISTER_MASK_SET_LOW(port->gpio.CS_TRIS, port->gpio.CS_mask);
+            break;
+        case GPIO_ANALOG:
+            REGISTER_MASK_SET_HIGH(port->gpio.CS_TRIS, port->gpio.CS_mask);
+            // Set analog the device
+            if(port->analog != -1) {
+                REGISTER_MASK_SET_LOW(ANALOG, BIT_MASK(port->analog));
+            }
+            break;
+    }
+}
+
+int gpio_get_analog(int gpioIdx) {
+    if(GPIO_PORTS[gpioIdx].gpio.type == GPIO_ANALOG) {
+        return 1;
+    } else
+        return 0;
+}
+
+gpio_port_t gpio_get(void) {
+    gpio_port_t port = 0;
     int i;
     for (i = 0; i < LEN; ++i) {
-        switch (GPIO_PORTS[i].type) {
+        switch (GPIO_PORTS[i].gpio.type) {
             case GPIO_INPUT:
-                if(REGISTER_MASK_READ(GPIO_PORTS[i].CS_PORT, GPIO_PORTS[i].CS_mask))
+                if(REGISTER_MASK_READ(GPIO_PORTS[i].gpio.CS_PORT, GPIO_PORTS[i].gpio.CS_mask))
                     port += BIT_MASK(i);
                 break;
             case GPIO_OUTPUT:
-                if(REGISTER_MASK_READ(GPIO_PORTS[i].CS_LAT, GPIO_PORTS[i].CS_mask))
+                if(REGISTER_MASK_READ(GPIO_PORTS[i].gpio.CS_LAT, GPIO_PORTS[i].gpio.CS_mask))
                     port += BIT_MASK(i);
                 break;
             default:
@@ -78,14 +107,14 @@ GPIO_PORT_T gpio_get(void) {
     return port;
 }
 
-void gpio_set(GPIO_PORT_T port) {
+void gpio_set(gpio_port_t port) {
     int i;
     for(i = 0; i < LEN; ++i) {
-        if(GPIO_PORTS[i].type == GPIO_OUTPUT) {
+        if(GPIO_PORTS[i].gpio.type == GPIO_OUTPUT) {
             if(REGISTER_MASK_READ(&port, BIT_MASK(i))) {
-                REGISTER_MASK_SET_HIGH(GPIO_PORTS[i].CS_LAT, GPIO_PORTS[i].CS_mask);
+                REGISTER_MASK_SET_HIGH(GPIO_PORTS[i].gpio.CS_LAT, GPIO_PORTS[i].gpio.CS_mask);
             } else {
-                REGISTER_MASK_SET_LOW(GPIO_PORTS[i].CS_LAT, GPIO_PORTS[i].CS_mask);
+                REGISTER_MASK_SET_LOW(GPIO_PORTS[i].gpio.CS_LAT, GPIO_PORTS[i].gpio.CS_mask);
             }
         }
     }

@@ -29,22 +29,29 @@ extern "C" {
 /******************************************************************************/
 /* System Level #define Macros                                                */
 /******************************************************************************/
+    
+    /// Build a Max bit in x position
+    #define BIT_MASK(x)                       (1 << (x))
+    
     //Rule of thumb: Always read inputs from PORTx and write outputs to LATx. 
     //If you need to read what you set an output to, read LATx.
     /// Port builder
     //#define GPIO_INIT(x, n, type)             {&(TRIS##x), &(PORT##x), &(LAT##x), BIT_MASK(n), (type)}
-    #define GPIO_INIT_TYPE(array, x, n, type_n)  \
+    #define GPIO_INIT_TYPE(array, x, n, type_n)   \
                 (array).CS_TRIS = &(TRIS##x);    \
                 (array).CS_PORT = &(PORT##x);    \
                 (array).CS_LAT = &(LAT##x);      \
                 (array).CS_mask = BIT_MASK((n)); \
-                (array).type = (type_n)
-    #define GPIO_INIT(array, x, n)  GPIO_INIT_TYPE(array, x, n, GPIO_INPUT)
-    
-    /// Build a Max bit in x position
-    #define BIT_MASK(x)                       (1 << (x))
+                (array).type = (type_n);
+    /// Simple initialization a GPIO
+    #define GPIO_INIT(array, x, n)  GPIO_INIT_TYPE((array).gpio, x, n, GPIO_INPUT)  \
+                                        (array).analog = -1;
+    /// Initialization with analog
+    #define GPIO_INIT_ANALOG(array, x, n, an) GPIO_INIT_TYPE((array).gpio, x, n, GPIO_INPUT) \
+                                                (array).analog = (an);
     /// Initialize hardware_bit_t with name register and bit mask
     #define REGISTER_INIT(reg, x)             {&(reg), BIT_MASK(x)}
+
     /// Set high bits in register with selected mask
     #define REGISTER_MASK_SET_HIGH(reg, mask) (*(reg) |= (mask))
     /// Set low bits in register with selected mask
@@ -53,27 +60,32 @@ extern "C" {
     #define REGISTER_MASK_TOGGLE(reg, mask)   (*(reg) ^= (mask))
     /// Read bits in register with selected mask
     #define REGISTER_MASK_READ(reg, mask)     ((*(reg) & (mask)) == (mask))
-    
-    /// Generic definition for register
-    typedef volatile unsigned int * REGISTER;
     /**
-     * Hardware bit
-     * Register
-     * Mask with selected bit
+     * 
      */
-    typedef struct _hardware_bit {
-        REGISTER REG;
-        unsigned int CS_mask;
-    } hardware_bit_t;
-    
-    typedef int16_t GPIO_PORT_T;
-    
     typedef enum {
         GPIO_INPUT,
         GPIO_OUTPUT,
         GPIO_ANALOG
     } gpio_type_t;
-    
+    /// Generic definition for register
+    typedef volatile unsigned int * REGISTER;
+    /**
+     * Hardware bit
+     * - Register
+     * - Mask with selected bit
+     */
+    typedef struct _hardware_bit {
+        REGISTER REG;
+        unsigned int CS_mask;
+    } hardware_bit_t;
+    /**
+     * 
+     */
+    typedef int16_t gpio_port_t;
+    /**
+     * 
+     */
     typedef struct _gpio {
         REGISTER CS_TRIS;
         REGISTER CS_PORT;
@@ -81,6 +93,15 @@ extern "C" {
         unsigned int CS_mask;
         gpio_type_t type;
     } gpio_t;
+    /**
+     * 
+     */
+    typedef struct _gp_peripheral {
+        gpio_t gpio;
+        hardware_bit_t* peripheral;
+        int analog;
+    } gp_peripherals_t;
+    
 /******************************************************************************/
 /* System Function Prototypes                                                 */
 /******************************************************************************/
@@ -90,7 +111,7 @@ extern "C" {
      * @param gpio
      * @param len
      */
-    void gpio_init(REGISTER analog, gpio_t* gpio, size_t len);
+    void gpio_init(REGISTER analog, gp_peripherals_t* gpio, size_t len);
     /**
      * 
      * @param port
@@ -99,21 +120,20 @@ extern "C" {
     /**
      * 
      * @param port
-     * @param mask_analog
      */
-    void gpio_register_analog(gpio_t* port, int mask_analog);
+    void gpio_register_peripheral(gp_peripherals_t* port);
     /**
      * 
      * @return 
      */
-    GPIO_PORT_T gpio_get(void);
+    gpio_port_t gpio_get(void);
     
     /**
      * 
      * @param port
      * @return 
      */
-    void gpio_set(GPIO_PORT_T port);
+    void gpio_set(gpio_port_t port);
 
 #ifdef	__cplusplus
 }
