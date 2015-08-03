@@ -80,9 +80,14 @@ void gpio_register_peripheral(gp_peripheral_t* port) {
     }
 }
 
+void gpio_setup(short number, gpio_type_t type) {
+    GPIO_PORTS[number].gpio.type = type;
+    gpio_register_peripheral(&GPIO_PORTS[number]);
+}
+
 int gpio_get_analog(int gpioIdx) {
     if(GPIO_PORTS[gpioIdx].gpio.type == GPIO_ANALOG) {
-        return 1;
+        return GPIO_PORTS[gpioIdx].common.analog->value;
     } else
         return 0;
 }

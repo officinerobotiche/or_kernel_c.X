@@ -49,10 +49,10 @@ extern "C" {
                 (array).type = (type_n);
     /// Simple initialization a GPIO
     #define GPIO_INIT(array, x, n)  GPIO_INIT_TYPE((array).gpio, x, n, GPIO_INPUT)  \
-                                        (array).common.analog = GPIO_NO_PERIPHERAL
+                                        (array).common.analog = GPIO_NO_PERIPHERAL;
     /// Initialization with analog
-    #define GPIO_INIT_ANALOG(array, x, n, an) GPIO_INIT_TYPE((array).gpio, x, n, GPIO_INPUT)
-    //                                            GPIO_ANALOG_CONF((array).common->analog.number, an)
+    #define GPIO_INIT_ANALOG(array, x, n, adc) GPIO_INIT_TYPE((array).gpio, x, n, GPIO_INPUT) \
+                                                (array).common.analog = (gp_analog_t*) adc;
     /// Initialize hardware_bit_t with name register and bit mask
     #define REGISTER_INIT(reg, x)             {&(reg), BIT_MASK(x)}
 
@@ -107,7 +107,7 @@ extern "C" {
     /**
      * 
      */
-    typedef union _gp_common {
+    typedef struct _gp_common {
         gp_analog_t* analog;
         hardware_bit_t* generic;
     } gp_common_t;
@@ -133,12 +133,23 @@ extern "C" {
      * 
      * @param port
      */
+    void gpio_setup(short number, gpio_type_t type);
+    /**
+     * 
+     * @param port
+     */
     void gpio_register(gpio_t* port);
     /**
      * 
      * @param port
      */
     void gpio_register_peripheral(gp_peripheral_t* port);
+    /**
+     * 
+     * @param gpioIdx
+     * @return 
+     */
+    int gpio_get_analog(int gpioIdx);
     /**
      * 
      * @return 
