@@ -41,7 +41,7 @@ extern "C" {
     //If you need to read what you set an output to, read LATx.
     /// Port builder
     //#define GPIO_INIT(x, n, type)             {&(TRIS##x), &(PORT##x), &(LAT##x), BIT_MASK(n), (type)}
-    #define GPIO_INIT_TYPE(array, x, n, type_n)   \
+    #define GPIO_INIT_TYPE(array, x, n, type_n)  \
                 (array).CS_TRIS = &(TRIS##x);    \
                 (array).CS_PORT = &(PORT##x);    \
                 (array).CS_LAT = &(LAT##x);      \
@@ -64,6 +64,8 @@ extern "C" {
     #define REGISTER_MASK_TOGGLE(reg, mask)   (*(reg) ^= (mask))
     /// Read bits in register with selected mask
     #define REGISTER_MASK_READ(reg, mask)     ((*(reg) & (mask)) == (mask))
+    /// Callback to configure the ADC
+    typedef void (*gpio_adc_callbackFunc_t)(int);
     /**
      * 
      */
@@ -128,7 +130,7 @@ extern "C" {
      * @param gpio
      * @param len
      */
-    void gpio_init(REGISTER analog, gp_peripheral_t* gpio, size_t len);
+    void gpio_init(REGISTER analog, gp_peripheral_t* gpio, size_t len, gpio_adc_callbackFunc_t call);
     /**
      * 
      * @param port
@@ -163,6 +165,13 @@ extern "C" {
      * @return 
      */
     void gpio_set(gpio_port_t port);
+    
+    /**
+     * 
+     * @param AdcBuffer
+     * @param len
+     */
+    inline void gpio_ProcessADCSamples(unsigned int* AdcBuffer, size_t len) ;
 
 #ifdef	__cplusplus
 }

@@ -28,15 +28,17 @@
 REGISTER ANALOG;
 gp_peripheral_t* GPIO_PORTS;
 size_t LEN;
+gpio_adc_callbackFunc_t callback;
 
 /*****************************************************************************/
 /* Communication Functions                                                   */
 /*****************************************************************************/
 
-void gpio_init(REGISTER analog, gp_peripheral_t* gpio, size_t len) {
+void gpio_init(REGISTER analog, gp_peripheral_t* gpio, size_t len, gpio_adc_callbackFunc_t call) {
     GPIO_PORTS = gpio;
     ANALOG = analog;
     LEN = len;
+    callback = call;
     int i;
     for(i = 0; i < LEN; ++i) {
         gpio_register_peripheral(&GPIO_PORTS[i]);
@@ -78,6 +80,7 @@ void gpio_register_peripheral(gp_peripheral_t* port) {
             }
             break;
     }
+    callback(1);
 }
 
 void gpio_setup_pin(short gpioIdx, gpio_type_t type) {
@@ -132,4 +135,8 @@ void gpio_set(gpio_port_t port) {
             }
         }
     }
+}
+
+inline void gpio_ProcessADCSamples(unsigned int* AdcBuffer, size_t len) {
+    
 }
