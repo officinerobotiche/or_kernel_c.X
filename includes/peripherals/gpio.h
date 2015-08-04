@@ -65,7 +65,7 @@ extern "C" {
     /// Read bits in register with selected mask
     #define REGISTER_MASK_READ(reg, mask)     ((*(reg) & (mask)) == (mask))
     /// Callback to configure the ADC
-    typedef void (*gpio_adc_callbackFunc_t)(int);
+    typedef bool (*gpio_adc_callbackFunc_t)(void);
     /**
      * 
      */
@@ -130,7 +130,7 @@ extern "C" {
      * @param gpio
      * @param len
      */
-    void gpio_init(REGISTER analog, gp_peripheral_t* gpio, size_t len, gpio_adc_callbackFunc_t call);
+    bool gpio_init(REGISTER analog, gp_peripheral_t* gpio, size_t len, gpio_adc_callbackFunc_t call);
     /**
      * 
      * @param port
@@ -140,7 +140,7 @@ extern "C" {
      * 
      * @param port
      */
-    void gpio_register_peripheral(gp_peripheral_t* port);
+    bool gpio_register_peripheral(gp_peripheral_t* port);
     /**
      * 
      * @param port

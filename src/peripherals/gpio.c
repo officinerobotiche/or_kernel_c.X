@@ -28,21 +28,24 @@
 REGISTER ANALOG;
 gp_peripheral_t* GPIO_PORTS;
 size_t LEN;
-gpio_adc_callbackFunc_t callback;
+gpio_adc_callbackFunc_t gpio_callback;
 
 /*****************************************************************************/
 /* Communication Functions                                                   */
 /*****************************************************************************/
 
-void gpio_init(REGISTER analog, gp_peripheral_t* gpio, size_t len, gpio_adc_callbackFunc_t call) {
+bool gpio_init(REGISTER analog, gp_peripheral_t* gpio, size_t len, gpio_adc_callbackFunc_t call) {
     GPIO_PORTS = gpio;
     ANALOG = analog;
+    REGISTER_MASK_SET_HIGH(ANALOG, 0xFFFF);
     LEN = len;
-    callback = call;
+    gpio_callback = call;
     int i;
+    bool state = true;
     for(i = 0; i < LEN; ++i) {
-        gpio_register_peripheral(&GPIO_PORTS[i]);
+        state &= gpio_register_peripheral(&GPIO_PORTS[i]);
     }
+    return state;
 }
 
 void gpio_register(gpio_t* port) {
@@ -58,7 +61,8 @@ void gpio_register(gpio_t* port) {
     }
 }
 
-void gpio_register_peripheral(gp_peripheral_t* port) {
+bool gpio_register_peripheral(gp_peripheral_t* port) {
+    int old_analog_state = *(ANALOG);
     switch(port->gpio.type) {
         case GPIO_INPUT:
             if(port->common.analog != GPIO_NO_PERIPHERAL) {
@@ -80,7 +84,9 @@ void gpio_register_peripheral(gp_peripheral_t* port) {
             }
             break;
     }
-    callback(1);
+    if(old_analog_state != *(ANALOG))
+        return gpio_callback();
+    return true;
 }
 
 void gpio_setup_pin(short gpioIdx, gpio_type_t type) {
@@ -138,5 +144,8 @@ void gpio_set(gpio_port_t port) {
 }
 
 inline void gpio_ProcessADCSamples(unsigned int* AdcBuffer, size_t len) {
-    
+    int i;
+    for(i = 0; i < len; ++i) {
+        
+    }
 }
