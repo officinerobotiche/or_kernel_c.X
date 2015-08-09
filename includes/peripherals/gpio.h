@@ -168,10 +168,11 @@ extern "C" {
     
     /**
      * 
+     * @param idx
      * @param AdcBuffer
      * @param len
      */
-    inline void gpio_ProcessADCSamples(unsigned int* AdcBuffer, size_t len) ;
+    inline void gpio_ProcessADCSamples(short idx, unsigned int* AdcBuffer, size_t len) ;
 
 #ifdef	__cplusplus
 }

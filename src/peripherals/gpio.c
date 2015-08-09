@@ -29,6 +29,8 @@ REGISTER ANALOG;
 gp_peripheral_t* GPIO_PORTS;
 size_t LEN;
 gpio_adc_callbackFunc_t gpio_callback;
+int *indirect_reference[10];
+unsigned int count_analog_gpio = 0;
 
 /*****************************************************************************/
 /* Communication Functions                                                   */
@@ -67,12 +69,16 @@ bool gpio_register_peripheral(gp_peripheral_t* port) {
         case GPIO_INPUT:
             if(port->common.analog != GPIO_NO_PERIPHERAL) {
                 REGISTER_MASK_SET_HIGH(ANALOG, BIT_MASK(port->common.analog->number));
+                indirect_reference[port->common.analog->number] = NULL;
+                count_analog_gpio--;
             }
             REGISTER_MASK_SET_HIGH(port->gpio.CS_TRIS, port->gpio.CS_mask);
             break;
         case GPIO_OUTPUT:
             if(port->common.analog != GPIO_NO_PERIPHERAL) {
                 REGISTER_MASK_SET_HIGH(ANALOG, BIT_MASK(port->common.analog->number));
+                indirect_reference[port->common.analog->number] = NULL;
+                count_analog_gpio --;
             }
             REGISTER_MASK_SET_LOW(port->gpio.CS_TRIS, port->gpio.CS_mask);
             break;
@@ -81,10 +87,12 @@ bool gpio_register_peripheral(gp_peripheral_t* port) {
             // Set analog the device
             if(port->common.analog != GPIO_NO_PERIPHERAL) {
                 REGISTER_MASK_SET_LOW(ANALOG, BIT_MASK(port->common.analog->number));
+                indirect_reference[port->common.analog->number] = &port->common.analog->value;
+                count_analog_gpio++;
             }
             break;
     }
-    if(old_analog_state != *(ANALOG))
+    if(old_analog_state != *(ANALOG)) 
         return gpio_callback();
     return true;
 }
@@ -143,9 +151,11 @@ void gpio_set(gpio_port_t port) {
     }
 }
 
-inline void gpio_ProcessADCSamples(unsigned int* AdcBuffer, size_t len) {
+inline void gpio_ProcessADCSamples(short idx, unsigned int* AdcBuffer, size_t len) {
     int i;
+    long temp;
     for(i = 0; i < len; ++i) {
-        
+        temp += (AdcBuffer)[i];
     }
+    *(indirect_reference[idx]) = temp >> 6;
 }
