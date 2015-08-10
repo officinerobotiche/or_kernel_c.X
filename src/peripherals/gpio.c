@@ -26,7 +26,8 @@
 /******************************************************************************/
 
 REGISTER ANALOG;
-gp_peripheral_t* GPIO_PORTS;
+//gp_peripheral_t* GPIO_PORTS;
+gp_port_def_t* GPIO_PORTS[10];
 size_t LEN;
 gpio_adc_callbackFunc_t gpio_callback;
 int *indirect_reference[10];
@@ -36,16 +37,19 @@ unsigned int count_analog_gpio = 0;
 /* Communication Functions                                                   */
 /*****************************************************************************/
 
-bool gpio_init(REGISTER analog, gp_peripheral_t* gpio, size_t len, gpio_adc_callbackFunc_t call) {
-    GPIO_PORTS = gpio;
+bool gpio_init(REGISTER analog, gpio_adc_callbackFunc_t call, int argc, ...) {
     ANALOG = analog;
     REGISTER_MASK_SET_HIGH(ANALOG, 0xFFFF);
-    LEN = len;
+    va_list argp;
     gpio_callback = call;
-    int i;
+    int counter_port, i;
     bool state = true;
-    for(i = 0; i < LEN; ++i) {
-        state &= gpio_register_peripheral(&GPIO_PORTS[i]);
+    va_start(argp, argc);
+    for(counter_port = 0; counter_port < argc; ++counter_port) {
+        GPIO_PORTS[counter_port] = va_arg(argp, gp_port_def_t*);
+        for(i = 0; i < GPIO_PORTS[counter_port]->len; ++i) {
+            state &= gpio_register_peripheral(&GPIO_PORTS[counter_port]->gpio[i]);
+        }
     }
     return state;
 }
@@ -97,38 +101,40 @@ bool gpio_register_peripheral(gp_peripheral_t* port) {
     return true;
 }
 
-void gpio_setup_pin(short gpioIdx, gpio_type_t type) {
-    GPIO_PORTS[gpioIdx].gpio.type = type;
-    gpio_register_peripheral(&GPIO_PORTS[gpioIdx]);
+void gpio_setup_pin(gpio_name_t name, short gpioIdx, gpio_type_t type) {
+    GPIO_PORTS[name]->gpio[gpioIdx].gpio.type = type;
+    gpio_register_peripheral(&GPIO_PORTS[name]->gpio[gpioIdx]);
 }
 
-void gpio_setup(gpio_port_t port, gpio_type_t type) {
+void gpio_setup(gpio_name_t name, gpio_port_t port, gpio_type_t type) {
     int i;
-    for (i = 0; i < LEN; ++i) {
+    int len = GPIO_PORTS[name]->len;
+    for (i = 0; i < len; ++i) {
         if(REGISTER_MASK_READ(&port, BIT_MASK(i))) {
-            gpio_setup_pin(i, type);
+            gpio_setup_pin(name, i, type);
         }
     }
 }
 
-int gpio_get_analog(short gpioIdx) {
-    if(GPIO_PORTS[gpioIdx].gpio.type == GPIO_ANALOG) {
-        return GPIO_PORTS[gpioIdx].common.analog->value;
+int gpio_get_analog(gpio_name_t name, short gpioIdx) {
+    if(GPIO_PORTS[name]->gpio[gpioIdx].gpio.type == GPIO_ANALOG) {
+        return GPIO_PORTS[name]->gpio[gpioIdx].common.analog->value;
     } else
         return 0;
 }
 
-gpio_port_t gpio_get(void) {
+gpio_port_t gpio_get(gpio_name_t name) {
     gpio_port_t port = 0;
     int i;
-    for (i = 0; i < LEN; ++i) {
-        switch (GPIO_PORTS[i].gpio.type) {
+    int len = GPIO_PORTS[name]->len;
+    for (i = 0; i < len; ++i) {
+        switch (GPIO_PORTS[name]->gpio[i].gpio.type) {
             case GPIO_INPUT:
-                if(REGISTER_MASK_READ(GPIO_PORTS[i].gpio.CS_PORT, GPIO_PORTS[i].gpio.CS_mask))
+                if(REGISTER_MASK_READ(GPIO_PORTS[name]->gpio[i].gpio.CS_PORT, GPIO_PORTS[name]->gpio[i].gpio.CS_mask))
                     port += BIT_MASK(i);
                 break;
             case GPIO_OUTPUT:
-                if(REGISTER_MASK_READ(GPIO_PORTS[i].gpio.CS_LAT, GPIO_PORTS[i].gpio.CS_mask))
+                if(REGISTER_MASK_READ(GPIO_PORTS[name]->gpio[i].gpio.CS_LAT, GPIO_PORTS[name]->gpio[i].gpio.CS_mask))
                     port += BIT_MASK(i);
                 break;
             default:
@@ -138,14 +144,15 @@ gpio_port_t gpio_get(void) {
     return port;
 }
 
-void gpio_set(gpio_port_t port) {
+void gpio_set(gpio_name_t name, gpio_port_t port) {
     int i;
-    for(i = 0; i < LEN; ++i) {
-        if(GPIO_PORTS[i].gpio.type == GPIO_OUTPUT) {
+    int len = GPIO_PORTS[name]->len;
+    for(i = 0; i < len; ++i) {
+        if(GPIO_PORTS[name]->gpio[i].gpio.type == GPIO_OUTPUT) {
             if(REGISTER_MASK_READ(&port, BIT_MASK(i))) {
-                REGISTER_MASK_SET_HIGH(GPIO_PORTS[i].gpio.CS_LAT, GPIO_PORTS[i].gpio.CS_mask);
+                REGISTER_MASK_SET_HIGH(GPIO_PORTS[name]->gpio[i].gpio.CS_LAT, GPIO_PORTS[name]->gpio[i].gpio.CS_mask);
             } else {
-                REGISTER_MASK_SET_LOW(GPIO_PORTS[i].gpio.CS_LAT, GPIO_PORTS[i].gpio.CS_mask);
+                REGISTER_MASK_SET_LOW(GPIO_PORTS[name]->gpio[i].gpio.CS_LAT, GPIO_PORTS[name]->gpio[i].gpio.CS_mask);
             }
         }
     }

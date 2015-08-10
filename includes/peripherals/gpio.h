@@ -22,6 +22,7 @@
 extern "C" {
 #endif
 
+#include <stdarg.h>
 #include <stdint.h>        /* Includes uint16_t definition                    */
 #include <stdbool.h>       /* Includes true/false definition                  */
 #include <string.h>
@@ -53,6 +54,10 @@ extern "C" {
     /// Initialization with analog
     #define GPIO_INIT_ANALOG(array, x, n, adc) GPIO_INIT_TYPE((array).gpio, x, n, GPIO_INPUT) \
                                                 (array).common.analog = (gp_analog_t*) adc;
+    /// GPIO port builder
+    #define GPIO_PORT_INIT(port, GP, SIZE)      \
+                (port).gpio = (GP);             \
+                (port).len = (SIZE);
     /// Initialize hardware_bit_t with name register and bit mask
     #define REGISTER_INIT(reg, x)             {&(reg), BIT_MASK(x)}
 
@@ -88,6 +93,10 @@ extern "C" {
     /**
      * 
      */
+    typedef short gpio_name_t;
+    /**
+     * 
+     */
     typedef int16_t gpio_port_t;
     /**
      * 
@@ -120,6 +129,13 @@ extern "C" {
         gpio_t gpio;
         gp_common_t common;
     } gp_peripheral_t;
+    /**
+     * 
+     */
+    typedef struct _gp_port_def {
+        gp_peripheral_t* gpio;
+        size_t len;
+    } gp_port_def_t;
     
 /******************************************************************************/
 /* System Function Prototypes                                                 */
@@ -130,7 +146,7 @@ extern "C" {
      * @param gpio
      * @param len
      */
-    bool gpio_init(REGISTER analog, gp_peripheral_t* gpio, size_t len, gpio_adc_callbackFunc_t call);
+    bool gpio_init(REGISTER analog, gpio_adc_callbackFunc_t call, int len, ...);
     /**
      * 
      * @param port
@@ -146,25 +162,25 @@ extern "C" {
      * @param port
      * @param type
      */
-    void gpio_setup(gpio_port_t port, gpio_type_t type);
+    void gpio_setup(gpio_name_t name, gpio_port_t port, gpio_type_t type);
     /**
      * 
      * @param gpioIdx
      * @return 
      */
-    int gpio_get_analog(short gpioIdx);
+    int gpio_get_analog(gpio_name_t name, short gpioIdx);
     /**
      * 
      * @return 
      */
-    gpio_port_t gpio_get(void);
+    gpio_port_t gpio_get(gpio_name_t name);
     
     /**
      * 
      * @param port
      * @return 
      */
-    void gpio_set(gpio_port_t port);
+    void gpio_set(gpio_name_t name, gpio_port_t port);
     
     /**
      * 
