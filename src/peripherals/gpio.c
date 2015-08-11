@@ -101,6 +101,8 @@ bool gpio_register_peripheral(gp_peripheral_t* port) {
     return true;
 }
 
+
+
 void gpio_setup_pin(gpio_name_t name, short gpioIdx, gpio_type_t type) {
     GPIO_PORTS[name]->gpio[gpioIdx].gpio.type = type;
     gpio_register_peripheral(&GPIO_PORTS[name]->gpio[gpioIdx]);
@@ -114,6 +116,10 @@ void gpio_setup(gpio_name_t name, gpio_port_t port, gpio_type_t type) {
             gpio_setup_pin(name, i, type);
         }
     }
+}
+
+gpio_type_t gpio_config(gpio_name_t name, short port) {
+    return GPIO_PORTS[name]->gpio[port].gpio.type;
 }
 
 int gpio_get_analog(gpio_name_t name, short gpioIdx) {

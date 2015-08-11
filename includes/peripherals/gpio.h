@@ -165,6 +165,13 @@ extern "C" {
     void gpio_setup(gpio_name_t name, gpio_port_t port, gpio_type_t type);
     /**
      * 
+     * @param name
+     * @param port
+     * @return 
+     */
+    gpio_type_t gpio_config(gpio_name_t name, short port);
+    /**
+     * 
      * @param gpioIdx
      * @return 
      */
