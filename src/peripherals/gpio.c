@@ -159,10 +159,14 @@ void gpio_set(gpio_name_t name, gpio_port_t port) {
 }
 
 inline void gpio_ProcessADCSamples(short idx, unsigned int* AdcBuffer, size_t len) {
+    gpio_ProcessADCSamples_start(idx, AdcBuffer, 0, len);
+}
+
+inline void gpio_ProcessADCSamples_start(short idx, unsigned int* AdcBuffer, int start, size_t len) {
     int i;
     long temp;
     for(i = 0; i < len; ++i) {
-        temp += (AdcBuffer)[i];
+        temp += (AdcBuffer)[i+start];
     }
     *(indirect_reference[idx]) = temp >> 6;
 }
