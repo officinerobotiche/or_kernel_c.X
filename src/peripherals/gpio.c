@@ -164,7 +164,7 @@ inline void gpio_ProcessADCSamples(short idx, unsigned int* AdcBuffer, size_t le
 
 inline void gpio_ProcessADCSamples_start(short idx, unsigned int* AdcBuffer, int start, size_t len) {
     int i;
-    long temp;
+    long temp = 0;
     for(i = 0; i < len; ++i) {
         temp += (AdcBuffer)[i+start];
     }
