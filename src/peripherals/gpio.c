@@ -101,11 +101,11 @@ bool gpio_register_peripheral(gp_peripheral_t* port) {
     return true;
 }
 
-
-
 void gpio_setup_pin(gpio_name_t name, short gpioIdx, gpio_type_t type) {
-    GPIO_PORTS[name]->gpio[gpioIdx].gpio.type = type;
-    gpio_register_peripheral(&GPIO_PORTS[name]->gpio[gpioIdx]);
+    if(GPIO_PORTS[name]->gpio[gpioIdx].gpio.type != type) {
+        GPIO_PORTS[name]->gpio[gpioIdx].gpio.type = type;
+        gpio_register_peripheral(&GPIO_PORTS[name]->gpio[gpioIdx]);
+    }
 }
 
 void gpio_setup(gpio_name_t name, gpio_port_t port, gpio_type_t type) {
@@ -164,15 +164,6 @@ void gpio_set(gpio_name_t name, gpio_port_t port) {
     }
 }
 
-inline void gpio_ProcessADCSamples(short idx, unsigned int* AdcBuffer, size_t len) {
-    gpio_ProcessADCSamples_start(idx, AdcBuffer, 0, len);
-}
-
-inline void gpio_ProcessADCSamples_start(short idx, unsigned int* AdcBuffer, int start, size_t len) {
-    int i;
-    long temp = 0;
-    for(i = 0; i < len; ++i) {
-        temp += (AdcBuffer)[i+start];
-    }
-    *(indirect_reference[idx]) = temp >> 6;
+inline void gpio_ProcessADCSamples(short idx, int value) {
+    *(indirect_reference[idx]) = value;
 }
