@@ -146,7 +146,7 @@ extern "C" {
      * @param gpio
      * @param len
      */
-    bool gpio_init(REGISTER analog, gpio_adc_callbackFunc_t call, int len, ...);
+    bool gpio_init(hardware_bit_t* analog_on, hardware_bit_t* dma_on, REGISTER analog, gpio_adc_callbackFunc_t call, int len, ...);
     /**
      * 
      * @param port

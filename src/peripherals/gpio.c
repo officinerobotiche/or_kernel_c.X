@@ -26,6 +26,8 @@
 /******************************************************************************/
 
 REGISTER ANALOG;
+hardware_bit_t* ANA_ON;
+hardware_bit_t* DMA_ON;
 //gp_peripheral_t* GPIO_PORTS;
 gp_port_def_t* GPIO_PORTS[10];
 size_t LEN;
@@ -37,7 +39,9 @@ unsigned int count_analog_gpio = 0;
 /* Communication Functions                                                   */
 /*****************************************************************************/
 
-bool gpio_init(REGISTER analog, gpio_adc_callbackFunc_t call, int argc, ...) {
+bool gpio_init(hardware_bit_t* analog_on, hardware_bit_t* dma_on, REGISTER analog, gpio_adc_callbackFunc_t call, int argc, ...) {
+    ANA_ON = analog_on;
+    DMA_ON = dma_on;
     ANALOG = analog;
     REGISTER_MASK_SET_HIGH(ANALOG, 0xFFFF);
     va_list argp;
@@ -101,20 +105,30 @@ bool gpio_register_peripheral(gp_peripheral_t* port) {
     return true;
 }
 
-void gpio_setup_pin(gpio_name_t name, short gpioIdx, gpio_type_t type) {
+bool gpio_setup_pin(gpio_name_t name, short gpioIdx, gpio_type_t type) {
     if(GPIO_PORTS[name]->gpio[gpioIdx].gpio.type != type) {
         GPIO_PORTS[name]->gpio[gpioIdx].gpio.type = type;
-        gpio_register_peripheral(&GPIO_PORTS[name]->gpio[gpioIdx]);
+        return gpio_register_peripheral(&GPIO_PORTS[name]->gpio[gpioIdx]);
     }
+    return false;
 }
 
 void gpio_setup(gpio_name_t name, gpio_port_t port, gpio_type_t type) {
     int i;
     int len = GPIO_PORTS[name]->len;
+    bool set = true;
+    if(type == GPIO_ANALOG) {
+        REGISTER_MASK_SET_LOW(ANA_ON->REG, ANA_ON->CS_mask);
+        REGISTER_MASK_SET_LOW(DMA_ON->REG, DMA_ON->CS_mask);
+    }
     for (i = 0; i < len; ++i) {
         if(REGISTER_MASK_READ(&port, BIT_MASK(i))) {
-            gpio_setup_pin(name, i, type);
+            set &= gpio_setup_pin(name, i, type);
         }
+    }
+    if(set && (type == GPIO_ANALOG)) {
+        REGISTER_MASK_SET_HIGH(ANA_ON->REG, ANA_ON->CS_mask);
+        REGISTER_MASK_SET_HIGH(DMA_ON->REG, DMA_ON->CS_mask);
     }
 }
 
