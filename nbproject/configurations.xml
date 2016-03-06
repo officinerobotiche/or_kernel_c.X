@@ -59,8 +59,8 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>ICD3PlatformTool</platformTool>
         <languageToolchain>XC16</languageToolchain>
-        <languageToolchainVersion>1.25</languageToolchainVersion>
-        <platform>3</platform>
+        <languageToolchainVersion>1.26</languageToolchainVersion>
+        <platform>4</platform>
       </toolsSet>
       <compileType>
         <linkerTool>
@@ -88,6 +88,7 @@
         <property key="code-model" value="default"/>
         <property key="const-model" value="default"/>
         <property key="data-model" value="default"/>
+        <property key="disable-instruction-scheduling" value="false"/>
         <property key="enable-all-warnings" value="true"/>
         <property key="enable-ansi-std" value="false"/>
         <property key="enable-ansi-warnings" value="false"/>
@@ -181,6 +182,7 @@
         <property key="output-file-format" value="elf"/>
         <property key="relaxed-math" value="false"/>
         <property key="save-temps" value="false"/>
+        <appendMe value="-merrata=psv_trap"/>
       </C30Global>
       <ICD3PlatformTool>
         <property key="ADC 1" value="true"/>
@@ -189,6 +191,7 @@
         <property key="DAC 1" value="true"/>
         <property key="DUAL COMPARATOR" value="true"/>
         <property key="ECAN" value="true"/>
+        <property key="Freeze All Other Peripherals" value="true"/>
         <property key="I2C1" value="true"/>
         <property key="INPUT CAPTURE 1" value="true"/>
         <property key="INPUT CAPTURE 2" value="true"/>
