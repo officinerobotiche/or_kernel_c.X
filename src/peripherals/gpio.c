@@ -72,7 +72,6 @@ void gpio_register(gpio_t* port) {
 }
 
 bool gpio_register_peripheral(gp_peripheral_t* port) {
-    int old_analog_state = *(ANALOG);
     switch(port->gpio.type) {
         case GPIO_INPUT:
             if(port->common.analog != GPIO_NO_PERIPHERAL) {
@@ -100,8 +99,6 @@ bool gpio_register_peripheral(gp_peripheral_t* port) {
             }
             break;
     }
-    if(old_analog_state != *(ANALOG)) 
-        return gpio_callback();
     return true;
 }
 
@@ -127,6 +124,8 @@ void gpio_setup(gpio_name_t name, gpio_port_t port, gpio_type_t type) {
         }
     }
     if(set && (type == GPIO_ANALOG)) {
+        // RUN ADC initializer
+        gpio_callback();
         REGISTER_MASK_SET_HIGH(ANA_ON->REG, ANA_ON->CS_mask);
         REGISTER_MASK_SET_HIGH(DMA_ON->REG, DMA_ON->CS_mask);
     }
