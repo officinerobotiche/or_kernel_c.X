@@ -66,6 +66,8 @@ typedef struct _interrupt_bit {
     bool available;
 } interrupt_bit_t;
 
+#define NANO_SEC_MOLTIPLICATOR 1000000000
+
 /******************************************************************************/
 /* Global Variable Declaration                                                */
 /******************************************************************************/
@@ -79,6 +81,8 @@ unsigned short event_counter = 0;
 REGISTER timer;
 /// Counter time register
 REGISTER PRTIMER;
+/// Frequency MicroController Unit (MCU)
+unsigned long time_sys;
 
 /******************************************************************************/
 /* Communication Functions                                                    */
@@ -98,11 +102,12 @@ void reset_event(hEvent_t eventIndex) {
     events[eventIndex].name = NULL;
 }
 
-void init_events(REGISTER timer_register, REGISTER pr_timer) {
+void init_events(REGISTER timer_register, REGISTER pr_timer, frequency_t frq_mcu) {
     hEvent_t eventIndex;
     unsigned short priorityIndex;
     timer = timer_register;
     PRTIMER = pr_timer;
+    time_sys = NANO_SEC_MOLTIPLICATOR/frq_mcu;
     for (eventIndex = 0; eventIndex < MAX_EVENTS; ++eventIndex) {
         reset_event(eventIndex);
     }
@@ -191,8 +196,8 @@ inline void event_manager(eventPriority priority) {
     }
 }
 
-inline uint16_t get_time(hEvent_t hEvent) {
+inline unsigned long get_time(hEvent_t hEvent) {
     if (hEvent != INVALID_EVENT_HANDLE) {
-        return  events[hEvent].time;
+        return  events[hEvent].time*time_sys;
     } else return 0;
 }
