@@ -116,7 +116,7 @@ extern "C" {
      * @param hEvent number event
      * @return time to computation in [nS]
      */
-    inline unsigned long get_time(hEvent_t hEvent);
+    inline uint32_t get_time(hEvent_t hEvent);
 
 #ifdef	__cplusplus
 }

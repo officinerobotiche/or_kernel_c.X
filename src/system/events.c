@@ -53,7 +53,7 @@ typedef struct _tagEVENT {
     int* argv;
     eventPriority priority;
     uint16_t overTmr;
-    uint16_t time;
+    uint32_t time;
     hModule_t name;
 } EVENT;
 /**
@@ -181,7 +181,7 @@ inline void event_manager(eventPriority priority) {
             pEvent = &events[eventIndex];
             if ((pEvent->eventPending == TRUE) && (pEvent->priority == priority)) {
                 if (pEvent->event_callback != NULL) {
-                    volatile uint16_t time;
+                    uint16_t time;
                     pEvent->eventPending = WORKING;
                     pEvent->overTmr = 0;                                            ///< Reset timer
                     time = *timer;                                                  ///< Timing function
@@ -203,7 +203,7 @@ inline void event_manager(eventPriority priority) {
     }
 }
 
-inline unsigned long get_time(hEvent_t hEvent) {
+inline uint32_t get_time(hEvent_t hEvent) {
     if (hEvent != INVALID_EVENT_HANDLE) {
         return  events[hEvent].time*time_sys;
     } else return 0;
