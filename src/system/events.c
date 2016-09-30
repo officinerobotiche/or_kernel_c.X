@@ -187,7 +187,14 @@ inline void event_manager(eventPriority priority) {
                     time = *timer;                                                  ///< Timing function
                     pEvent->event_callback(pEvent->argc, pEvent->argv);             ///< Launch callback
                     pEvent->eventPending = FALSE;                                   ///< Complete event
-                    pEvent->time = pEvent->overTmr * (*PRTIMER) + (*timer) - time;  ///< Time of execution
+                    //pEvent->time = pEvent->overTmr * (*PRTIMER) + (*timer) - time;  
+                    // Time of execution
+                    if(pEvent->overTmr == 0) {                  
+                        pEvent->time = (*timer) - time;
+                    } else {
+                        pEvent->time = ((*timer) + (0xFFFF - time)
+                                + (0xFFFF * (pEvent->overTmr - 1)));
+                    }
                 }
             } else if(pEvent->eventPending == WORKING) {
                 pEvent->overTmr++;
