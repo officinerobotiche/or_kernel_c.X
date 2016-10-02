@@ -151,7 +151,7 @@ inline void I2C_manager (void) {
     return;
 }
 
-void I2C_Init(hardware_bit_t* i2c_interrupt, REGISTER i2c_con, REGISTER i2c_stat, REGISTER i2c_trn, REGISTER i2c_rcv, I2C_callbackFunc resetCallback) {
+hEvent_t I2C_Init(hardware_bit_t* i2c_interrupt, REGISTER i2c_con, REGISTER i2c_stat, REGISTER i2c_trn, REGISTER i2c_rcv, I2C_callbackFunc resetCallback) {
 
     I2C_INTERRUPT = i2c_interrupt;
     I2C_CON = i2c_con;
@@ -165,7 +165,7 @@ void I2C_Init(hardware_bit_t* i2c_interrupt, REGISTER i2c_con, REGISTER i2c_stat
     I2C_service_handle = register_event_p(i2c_module, &serviceI2C, EVENT_PRIORITY_LOW);
     
     I2C_load();
-    return;
+    return I2C_service_handle;
 }
 
 /**
