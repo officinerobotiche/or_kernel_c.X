@@ -19,6 +19,8 @@
 /* Files to Include                                                           */
 /******************************************************************************/
 
+#include <xc.h>
+
 #include "system/events.h"
 #include "peripherals/gpio.h"
 
@@ -173,7 +175,7 @@ hModule_t get_event_name(hEvent_t eventIndex) {
 }
 
 inline void event_manager(eventPriority priority) {
-
+    int save_to;
     if (event_counter > 0) {
         hEvent_t eventIndex;
         EVENT* pEvent;
@@ -185,8 +187,10 @@ inline void event_manager(eventPriority priority) {
                     pEvent->eventPending = WORKING;
                     pEvent->overTmr = 0;                                            ///< Reset timer
                     time = *timer;                                                  ///< Timing function
+                    SET_AND_SAVE_CPU_IPL(save_to, 7);
                     pEvent->event_callback(pEvent->argc, pEvent->argv);             ///< Launch callback
                     pEvent->eventPending = FALSE;                                   ///< Complete event
+                    RESTORE_CPU_IPL(save_to);
                     // Time of execution
                     if(pEvent->overTmr == 0) {                  
                         pEvent->time = (*timer) - time;
