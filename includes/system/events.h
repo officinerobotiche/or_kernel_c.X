@@ -59,7 +59,7 @@ extern "C" {
      * @param pr_timer Register counter
      * @param frq_mcu frequency of Microcontroller
      */
-    void init_events(REGISTER timer_register, REGISTER pr_timer, frequency_t frq_mcu);
+    void init_events(REGISTER timer_register, REGISTER pr_timer, frequency_t frq_mcu, unsigned int level);
     /**
      * You can register an event interrupt, with type of priority and bit interrupt
      * @param priority type of priority

@@ -85,6 +85,8 @@ REGISTER timer;
 REGISTER PRTIMER;
 /// Frequency MicroController Unit (MCU)
 unsigned long time_sys;
+/// Maskable interrupt level
+unsigned int LEVEL;
 
 /******************************************************************************/
 /* Communication Functions                                                    */
@@ -104,11 +106,12 @@ void reset_event(hEvent_t eventIndex) {
     events[eventIndex].name = NULL;
 }
 
-void init_events(REGISTER timer_register, REGISTER pr_timer, frequency_t frq_mcu) {
+void init_events(REGISTER timer_register, REGISTER pr_timer, frequency_t frq_mcu, unsigned int level) {
     hEvent_t eventIndex;
     unsigned short priorityIndex;
     timer = timer_register;
     PRTIMER = pr_timer;
+    LEVEL = level;
     time_sys = NANO_SEC_MOLTIPLICATOR/frq_mcu;
     for (eventIndex = 0; eventIndex < MAX_EVENTS; ++eventIndex) {
         reset_event(eventIndex);
@@ -187,7 +190,7 @@ inline void event_manager(eventPriority priority) {
                     pEvent->eventPending = WORKING;
                     pEvent->overTmr = 0;                                            ///< Reset timer
                     time = *timer;                                                  ///< Timing function
-                    SET_AND_SAVE_CPU_IPL(save_to, 7);
+                    SET_AND_SAVE_CPU_IPL(save_to, LEVEL);
                     pEvent->event_callback(pEvent->argc, pEvent->argv);             ///< Launch callback
                     pEvent->eventPending = FALSE;                                   ///< Complete event
                     RESTORE_CPU_IPL(save_to);
