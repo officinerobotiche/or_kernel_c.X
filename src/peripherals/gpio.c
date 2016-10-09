@@ -110,7 +110,7 @@ bool gpio_setup_pin(gpio_name_t name, short gpioIdx, gpio_type_t type) {
     return false;
 }
 
-void gpio_setup(gpio_name_t name, gpio_port_t port, gpio_type_t type) {
+void gpio_setup(gpio_name_t name, uint16_t port, gpio_type_t type) {
     int i;
     int len = GPIO_PORTS[name]->len;
     bool set = true;
@@ -143,18 +143,19 @@ int gpio_get_analog(gpio_name_t name, short gpioIdx) {
 }
 
 gpio_port_t gpio_get(gpio_name_t name) {
-    gpio_port_t port = 0;
+    gpio_port_t port;
     int i;
-    int len = GPIO_PORTS[name]->len;
-    for (i = 0; i < len; ++i) {
+    port.port = 0;
+    port.len = GPIO_PORTS[name]->len;
+    for (i = 0; i < port.len; ++i) {
         switch (GPIO_PORTS[name]->gpio[i].gpio.type) {
             case GPIO_INPUT:
                 if(REGISTER_MASK_READ(GPIO_PORTS[name]->gpio[i].gpio.CS_PORT, GPIO_PORTS[name]->gpio[i].gpio.CS_mask))
-                    port += BIT_MASK(i);
+                    port.port += BIT_MASK(i);
                 break;
             case GPIO_OUTPUT:
                 if(REGISTER_MASK_READ(GPIO_PORTS[name]->gpio[i].gpio.CS_LAT, GPIO_PORTS[name]->gpio[i].gpio.CS_mask))
-                    port += BIT_MASK(i);
+                    port.port += BIT_MASK(i);
                 break;
             default:
                 break;
@@ -168,7 +169,7 @@ void gpio_set(gpio_name_t name, gpio_port_t port) {
     int len = GPIO_PORTS[name]->len;
     for(i = 0; i < len; ++i) {
         if(GPIO_PORTS[name]->gpio[i].gpio.type == GPIO_OUTPUT) {
-            if(REGISTER_MASK_READ(&port, BIT_MASK(i))) {
+            if(REGISTER_MASK_READ(&port.port, BIT_MASK(i))) {
                 REGISTER_MASK_SET_HIGH(GPIO_PORTS[name]->gpio[i].gpio.CS_LAT, GPIO_PORTS[name]->gpio[i].gpio.CS_mask);
             } else {
                 REGISTER_MASK_SET_LOW(GPIO_PORTS[name]->gpio[i].gpio.CS_LAT, GPIO_PORTS[name]->gpio[i].gpio.CS_mask);

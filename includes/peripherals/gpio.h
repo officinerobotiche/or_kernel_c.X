@@ -97,7 +97,10 @@ extern "C" {
     /**
      * 
      */
-    typedef int16_t gpio_port_t;
+    typedef struct _gpio_port {
+        uint8_t len;
+        int16_t port;
+    } gpio_port_t;
     /**
      * 
      */
@@ -162,7 +165,7 @@ extern "C" {
      * @param port
      * @param type
      */
-    void gpio_setup(gpio_name_t name, gpio_port_t port, gpio_type_t type);
+    void gpio_setup(gpio_name_t name, uint16_t port, gpio_type_t type);
     /**
      * 
      * @param name
