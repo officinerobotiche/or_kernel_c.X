@@ -75,9 +75,9 @@ extern "C" {
      * 
      */
     typedef enum {
-        GPIO_INPUT,
-        GPIO_OUTPUT,
-        GPIO_ANALOG
+        GPIO_INPUT = 1,
+        GPIO_OUTPUT = 0,
+        GPIO_ANALOG = 2
     } gpio_type_t;
     /// Generic definition for register
     typedef volatile unsigned int * REGISTER;
