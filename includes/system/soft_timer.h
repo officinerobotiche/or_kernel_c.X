@@ -34,7 +34,7 @@ extern "C" {
     typedef struct _timer {
         uint32_t time;
         uint32_t counter;
-    } timer_t;
+    } soft_timer_t;
 /******************************************************************************/
 /* System Function Prototypes                                                 */
 /******************************************************************************/
@@ -46,20 +46,20 @@ extern "C" {
      * @param time timer to set the timer
      * @return return true if registered
      */
-    bool init_soft_timer(timer_t *timer, frequency_t frequency, uint16_t time);
+    bool init_soft_timer(soft_timer_t *timer, frequency_t frequency, uint16_t time);
     
     /**
      * Reset the timer to zero
      * @param timer the timer
      */
-    void reset_timer(timer_t *timer);
+    void reset_timer(soft_timer_t *timer);
     
     /**
      * Run the timer and check if is in time
      * @param timer the timer
      * @return return true if is in time
      */
-    bool run_timer(timer_t *timer);
+    bool run_timer(soft_timer_t *timer);
     
 #ifdef	__cplusplus
 }

@@ -27,17 +27,17 @@
 /* Global Variable Declaration                                                */
 /******************************************************************************/
 
-bool init_soft_timer(timer_t *timer, frequency_t frequency, uint16_t time) {
+bool init_soft_timer(soft_timer_t *timer, frequency_t frequency, uint16_t time) {
     timer->time = time * frequency;
     timer->counter = 0;
     return true;
 }
 
-void reset_timer(timer_t *timer) {
+void reset_timer(soft_timer_t *timer) {
     timer->counter = 0;
 }
 
-bool run_timer(timer_t *timer) {
+bool run_timer(soft_timer_t *timer) {
     if ((timer->counter + 1) >= timer->time) {
         return true;
     } else {
