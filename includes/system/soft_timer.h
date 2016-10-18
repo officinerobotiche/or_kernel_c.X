@@ -23,15 +23,44 @@ extern "C" {
 #endif /* __cplusplus */
     
 #include <stdint.h>        /* Includes uint16_t definition                    */
-
+#include <stdbool.h>       /* Includes true/false definition                  */
+    
+#include "events.h"
+    
 /******************************************************************************/
 /* System Level #define Macros                                                */
 /******************************************************************************/
     
+    typedef struct _timer {
+        uint32_t time;
+        uint32_t counter;
+    } timer_t;
 /******************************************************************************/
 /* System Function Prototypes                                                 */
 /******************************************************************************/
 
+    /**
+     * Initialize a soft timer. This timer works in a real time routine
+     * @param timer the timer
+     * @param frequency main frequency
+     * @param time timer to set the timer
+     * @return return true if registered
+     */
+    bool init_soft_timer(timer_t *timer, frequency_t frequency, uint16_t time);
+    
+    /**
+     * Reset the timer to zero
+     * @param timer the timer
+     */
+    void reset_timer(timer_t *timer);
+    
+    /**
+     * Run the timer and check if is in time
+     * @param timer the timer
+     * @return return true if is in time
+     */
+    bool run_timer(timer_t *timer);
+    
 #ifdef	__cplusplus
 }
 #endif /* __cplusplus */
