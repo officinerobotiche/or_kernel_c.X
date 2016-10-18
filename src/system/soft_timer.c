@@ -39,6 +39,7 @@ void reset_timer(soft_timer_t *timer) {
 
 bool run_timer(soft_timer_t *timer) {
     if ((timer->counter + 1) >= timer->time) {
+        timer->counter = 0;
         return true;
     } else {
         timer->counter++;
