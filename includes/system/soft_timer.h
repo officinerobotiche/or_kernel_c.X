@@ -46,7 +46,7 @@ extern "C" {
      * @param time timer to set the timer
      * @return return true if registered
      */
-    bool init_soft_timer(soft_timer_t *timer, frequency_t frequency, uint16_t time);
+    bool init_soft_timer(soft_timer_t *timer, frequency_t frequency, uint32_t time);
     
     /**
      * Reset the timer to zero
@@ -59,7 +59,7 @@ extern "C" {
      * @param timer the timer
      * @return return true if is in time
      */
-    bool run_timer(soft_timer_t *timer);
+    bool __attribute__((always_inline)) run_timer(soft_timer_t *timer);
     
 #ifdef	__cplusplus
 }

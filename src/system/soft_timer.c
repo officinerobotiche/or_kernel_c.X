@@ -23,12 +23,14 @@
 
 #include "system/soft_timer.h"
 
+#define MICRO 1000000
+
 /******************************************************************************/
 /* Global Variable Declaration                                                */
 /******************************************************************************/
 
-bool init_soft_timer(soft_timer_t *timer, frequency_t frequency, uint16_t time) {
-    timer->time = time * frequency;
+bool init_soft_timer(soft_timer_t *timer, frequency_t frequency, uint32_t time) {
+    timer->time = frequency * (time / MICRO);
     timer->counter = 0;
     return true;
 }
@@ -37,7 +39,7 @@ void reset_timer(soft_timer_t *timer) {
     timer->counter = 0;
 }
 
-bool run_timer(soft_timer_t *timer) {
+bool __attribute__((always_inline)) run_timer(soft_timer_t *timer) {
     if ((timer->counter + 1) >= timer->time) {
         timer->counter = 0;
         return true;

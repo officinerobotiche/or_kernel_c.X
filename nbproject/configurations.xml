@@ -48,6 +48,8 @@
   <sourceRootList>
     <Elem>src/peripherals</Elem>
     <Elem>includes/peripherals</Elem>
+    <Elem>src/system</Elem>
+    <Elem>includes/system</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
