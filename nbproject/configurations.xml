@@ -16,6 +16,7 @@
         <itemPath>includes/system/events.h</itemPath>
         <itemPath>includes/system/task_manager.h</itemPath>
         <itemPath>includes/system/modules.h</itemPath>
+        <itemPath>includes/system/soft_timer.h</itemPath>
       </logicalFolder>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
@@ -37,6 +38,7 @@
         <itemPath>src/system/events.c</itemPath>
         <itemPath>src/system/task_manager.c</itemPath>
         <itemPath>src/system/modules.c</itemPath>
+        <itemPath>src/system/soft_timer.c</itemPath>
       </logicalFolder>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
