@@ -25,7 +25,6 @@
 #include <stdbool.h>       /* Includes true/false definition */
 
 #include "or_peripherals/I2C/I2C.h"
-#include "or_system/modules.h"
 
 /// Define mask type of bit
 #define MASK_I2CCON_EN           BIT_MASK(15)
@@ -71,9 +70,6 @@ void I2C_idle(void);
 void I2C_Failed(void);
 bool I2C_Normal(void);
 void I2C_trigger_service(void);
-    
-#define I2C "I2C"
-static string_data_t _MODULE_I2C = {I2C, sizeof (I2C)};
 /// define depth queue
 #define I2C_QUEUE_DEPTH     3
 /// Define I2C queue
@@ -159,10 +155,8 @@ hEvent_t I2C_Init(hardware_bit_t* i2c_interrupt, REGISTER i2c_con, REGISTER i2c_
     I2C_TRN = i2c_trn;
     I2C_RCV = i2c_rcv;
     res_Callback = resetCallback;
-    /// Register module
-    hModule_t i2c_module = register_module(&_MODULE_I2C);
     /// Register event
-    I2C_service_handle = register_event_p(i2c_module, &serviceI2C, EVENT_PRIORITY_LOW);
+    I2C_service_handle = register_event_p(&serviceI2C, EVENT_PRIORITY_LOW);
     
     I2C_load();
     return I2C_service_handle;

@@ -24,7 +24,6 @@ extern "C" {
 
     #include <stdarg.h>
     #include "or_system/events.h"
-    #include "or_system/modules.h"
 
 /******************************************************************************/
 /* System Level #define Macros                                                */
@@ -100,12 +99,6 @@ extern "C" {
      * @return if task exist
      */
     bool task_unload(hTask_t hTask);
-    /**
-     * Return associated number module name
-     * @param taskIndex number task
-     * @return number module
-     */
-    hModule_t task_get_name(hTask_t taskIndex);
     /**
      * Number of registered tasks
      * @return number task

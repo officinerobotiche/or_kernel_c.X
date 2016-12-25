@@ -35,9 +35,6 @@
 
 #define MCP24LC256_COMMAND  0xA0
 
-#define EEPROM "EEPROM"
-static string_data_t _MODULE_EEPROM = {EEPROM, sizeof (EEPROM)};
-
 typedef enum _EEPROM_STATES {
     MCP24LC256_STATE_STOPPED,
     MCP24LC256_STATE_READING,
@@ -87,10 +84,8 @@ void EEPROM_service(int argc, int* argv) {
 }
 
 void EEPROM_init(unsigned int timeout_write) {
-    /// Register module
-    hModule_t eeprom_module = register_module(&_MODULE_EEPROM);
     /// Register event
-    memory_service_handle = register_event_p(eeprom_module, &EEPROM_service, EVENT_PRIORITY_LOW);
+    memory_service_handle = register_event_p(&EEPROM_service, EVENT_PRIORITY_LOW);
     /// Register wait ACK event
     memory_task_handle = task_load(memory_service_handle, timeout_write);
 }

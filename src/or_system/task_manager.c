@@ -129,10 +129,6 @@ bool task_unload(hTask_t hTask) {
     return false;
 }
 
-hModule_t task_get_name(hTask_t taskIndex) {
-    return get_event_name(tasks[taskIndex].event);
-}
-
 unsigned short get_task_number(void) {
     return task_count;
 }

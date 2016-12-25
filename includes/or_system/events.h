@@ -26,7 +26,6 @@ extern "C" {
 #include <stdbool.h>       /* Includes true/false definition                  */
     
 #include "or_peripherals/GPIO/gpio.h"
-#include "or_system/modules.h"
 
 /******************************************************************************/
 /* System Level #define Macros                                                */
@@ -81,25 +80,17 @@ extern "C" {
     /**
      * Register an event with a function to call when the event started.
      * Default priority values is EVENT_PRIORITY_MEDIUM
-     * @param name associated number module name
      * @param event_callback function to call
      * @return number event
      */
-    hEvent_t register_event(hModule_t name, event_callback_t event_callback);
+    hEvent_t register_event(event_callback_t event_callback);
     /**
      * Register an event with priority and a function to call when the event started
-     * @param name associated number module name
      * @param event_callback function to call
      * @param priority priority for this event
      * @return number event
      */
-    hEvent_t register_event_p(hModule_t name, event_callback_t event_callback, eventPriority priority);
-    /**
-     * Get number module associated
-     * @param eventIndex index event
-     * @return index module
-     */
-    hModule_t get_event_name(hEvent_t eventIndex);
+    hEvent_t register_event_p(event_callback_t event_callback, eventPriority priority);
     /**
      * Remove from list of events the event
      * @param eventIndex index event

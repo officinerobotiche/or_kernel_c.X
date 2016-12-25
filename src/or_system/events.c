@@ -56,7 +56,6 @@ typedef struct _tagEVENT {
     eventPriority priority;
     uint16_t overTmr;
     uint32_t time;
-    hModule_t name;
 } EVENT;
 /**
  * Information about hardware interrupt
@@ -103,7 +102,6 @@ void reset_event(hEvent_t eventIndex) {
     events[eventIndex].time = 0;
     events[eventIndex].argc = 0;
     events[eventIndex].argv = NULL;
-    events[eventIndex].name = NULL;
 }
 
 void init_events(REGISTER timer_register, REGISTER pr_timer, frequency_t frq_mcu, unsigned int level) {
@@ -144,11 +142,11 @@ void trigger_event_data(hEvent_t hEvent, int argc, int *argv) {
     }
 }
 
-hEvent_t register_event(hModule_t name, event_callback_t event_callback) {
-    return register_event_p(name, event_callback, EVENT_PRIORITY_MEDIUM);
+hEvent_t register_event(event_callback_t event_callback) {
+    return register_event_p(event_callback, EVENT_PRIORITY_MEDIUM);
 }
 
-hEvent_t register_event_p(hModule_t name, event_callback_t event_callback, eventPriority priority) {
+hEvent_t register_event_p(event_callback_t event_callback, eventPriority priority) {
     hEvent_t eventIndex;
 
     if (interrupts[priority].available) {
@@ -156,7 +154,6 @@ hEvent_t register_event_p(hModule_t name, event_callback_t event_callback, event
             if (events[eventIndex].event_callback == NULL) {
                 events[eventIndex].event_callback = event_callback;
                 events[eventIndex].priority = priority;
-                events[eventIndex].name = name;
                 return eventIndex;
             }
         }
@@ -171,10 +168,6 @@ bool unregister_event(hEvent_t eventIndex) {
         return true;
     } else
         return false;
-}
-
-hModule_t get_event_name(hEvent_t eventIndex) {
-    return events[eventIndex].name;
 }
 
 inline void event_manager(eventPriority priority) {
