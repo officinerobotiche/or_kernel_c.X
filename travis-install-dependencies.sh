@@ -17,13 +17,13 @@
 # of the project directory. Than extracts and installs them.
 # 
 # Versions:
-#  MPLAB® X IDE:            v3.40
-#  MPLAB® XC16 Compiler:    v1.26
+#  MPLAB® X IDE:            v3.50
+#  MPLAB® XC16 Compiler:    v1.30
 #  MPLAB® Pheriperhal Lib:  v2.00
 #
 
-export MPLABVER=v3.40
-export XC16VER=v1.26
+export MPLABVER=v3.50
+export XC16VER=v1.30
 export PERIPHERAL_LIBRARY=v2.00
 
 # Save the current working directory
