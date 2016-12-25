@@ -30,22 +30,31 @@ extern "C" {
 /******************************************************************************/
 /* System Level #define Macros                                                */
 /******************************************************************************/
-    /// Invalid handle for event
-    #define INVALID_EVENT_HANDLE 0xFFFF
-    /// Dimension event priority
-    #define LNG_EVENTPRIORITY 4
+    /// General information about interrupt
+    typedef struct _interrupt_controller {
+        const hardware_bit_t FLAG;
+        const hardware_bit_t ENABLE;
+    } interrupt_controller_t;
+    
+#define EVENT_INTERRUPT_INIT(Flag, n, Enable, x) {REGISTER_INIT(Flag, n), REGISTER_INIT(Enable, x)}
 
     /// Type of events, from low level to high level
     typedef enum _eventP {
-        EVENT_PRIORITY_LOW = 0,
+        EVENT_PRIORITY_HIGH = 0,
         EVENT_PRIORITY_MEDIUM,
-        EVENT_PRIORITY_HIGH,
+        EVENT_PRIORITY_LOW,
         EVENT_PRIORITY_VERY_LOW,
+        EVENT_PRIORITY_CPU
     } eventPriority;
-    /// Definition of frequency
-    typedef uint32_t frequency_t;
+    /// Dimension event priority
+    /// The size of eventPriority enumeration minus CPU priority
+    #define LNG_EVENTPRIORITY 4
     /// event register number
     typedef uint16_t hEvent_t;
+    /// Invalid handle for event
+    #define INVALID_EVENT_HANDLE 0xFFFF
+    /// Definition of frequency
+    typedef uint32_t frequency_t;
     /// Callback when the function start
     typedef void (*event_callback_t)(int argc, int* argv);
 /******************************************************************************/
@@ -64,7 +73,7 @@ extern "C" {
      * @param priority type of priority
      * @param pin Interrupt bit to will be used to start interrupt
      */
-    void register_interrupt(eventPriority priority, hardware_bit_t* pin);
+    void register_interrupt(eventPriority priority, const interrupt_controller_t* interrupt_controller);
     /**
      * Launch a particular function event
      * @param hEvent number of event
@@ -80,12 +89,14 @@ extern "C" {
     /**
      * Register an event with a function to call when the event started.
      * Default priority values is EVENT_PRIORITY_MEDIUM
+     * @param name associated number module name
      * @param event_callback function to call
      * @return number event
      */
     hEvent_t register_event(event_callback_t event_callback);
     /**
      * Register an event with priority and a function to call when the event started
+     * @param name associated number module name
      * @param event_callback function to call
      * @param priority priority for this event
      * @return number event
@@ -108,6 +119,10 @@ extern "C" {
      * @return time to computation in [nS]
      */
     inline uint32_t get_time(hEvent_t hEvent);
+    /**
+     * Controller CPU
+     */
+    inline void CPU_controller();
 
 #ifdef	__cplusplus
 }

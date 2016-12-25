@@ -19,10 +19,7 @@
 /* Files to Include                                                           */
 /******************************************************************************/
 
-#include <xc.h>
-
 #include "or_system/events.h"
-#include "or_peripherals/GPIO/gpio.h"
 
 /// Max number of events
 #define MAX_EVENTS 16
@@ -63,7 +60,7 @@ typedef struct _tagEVENT {
  * state of interrupt
  */
 typedef struct _interrupt_bit {
-    hardware_bit_t* interrupt_bit;
+    const hardware_bit_t* interrupt_bit;
     bool available;
 } interrupt_bit_t;
 
@@ -97,7 +94,7 @@ unsigned int LEVEL;
 void reset_event(hEvent_t eventIndex) {
     events[eventIndex].event_callback = NULL;
     events[eventIndex].eventPending = FALSE;
-    events[eventIndex].priority = EVENT_PRIORITY_LOW;
+    events[eventIndex].priority = EVENT_PRIORITY_CPU;
     events[eventIndex].overTmr = 0;
     events[eventIndex].time = 0;
     events[eventIndex].argc = 0;
@@ -120,36 +117,46 @@ void init_events(REGISTER timer_register, REGISTER pr_timer, frequency_t frq_mcu
     event_counter = 0;
 }
 
-void register_interrupt(eventPriority priority, hardware_bit_t* pin) {
-    interrupts[priority].interrupt_bit = pin;
+void register_interrupt(eventPriority priority, const interrupt_controller_t* interrupt_controller) {
+    interrupts[priority].interrupt_bit = &interrupt_controller->FLAG;
+    // Disable the interrupt
+    REGISTER_MASK_SET_LOW(interrupt_controller->ENABLE.REG, interrupt_controller->ENABLE.CS_mask);
+    // Set priority
+    // TODO
+    // Set Low the flag
     REGISTER_MASK_SET_LOW(interrupts[priority].interrupt_bit->REG, interrupts[priority].interrupt_bit->CS_mask);
+    // Enable the interrupt
+    REGISTER_MASK_SET_HIGH(interrupt_controller->ENABLE.REG, interrupt_controller->ENABLE.CS_mask);
     interrupts[priority].available = true;
     event_counter++;
 }
 
-void trigger_event(hEvent_t hEvent) {
+inline void trigger_event(hEvent_t hEvent) {
     trigger_event_data(hEvent, 0, NULL);
 }
 
-void trigger_event_data(hEvent_t hEvent, int argc, int *argv) {
+inline void trigger_event_data(hEvent_t hEvent, int argc, int *argv) {
     if (hEvent < MAX_EVENTS) {
         if (events[hEvent].event_callback != NULL) {
             events[hEvent].eventPending = TRUE;
             events[hEvent].argc = argc;
             events[hEvent].argv = argv;
-            REGISTER_MASK_SET_HIGH(interrupts[events[hEvent].priority].interrupt_bit->REG, interrupts[events[hEvent].priority].interrupt_bit->CS_mask);
+            // Set high the interrupt register.
+            if(events[hEvent].priority != EVENT_PRIORITY_CPU) {
+                REGISTER_MASK_SET_HIGH(interrupts[events[hEvent].priority].interrupt_bit->REG, interrupts[events[hEvent].priority].interrupt_bit->CS_mask);
+            }
         }
     }
 }
 
 hEvent_t register_event(event_callback_t event_callback) {
-    return register_event_p(event_callback, EVENT_PRIORITY_MEDIUM);
+    return register_event_p(event_callback, EVENT_PRIORITY_CPU);
 }
 
 hEvent_t register_event_p(event_callback_t event_callback, eventPriority priority) {
     hEvent_t eventIndex;
 
-    if (interrupts[priority].available) {
+    if (interrupts[priority].available || priority == EVENT_PRIORITY_CPU) {
         for (eventIndex = 0; eventIndex < MAX_EVENTS; ++eventIndex) {
             if (events[eventIndex].event_callback == NULL) {
                 events[eventIndex].event_callback = event_callback;
@@ -171,7 +178,6 @@ bool unregister_event(hEvent_t eventIndex) {
 }
 
 inline void event_manager(eventPriority priority) {
-    int save_to;
     if (event_counter > 0) {
         hEvent_t eventIndex;
         EVENT* pEvent;
@@ -183,22 +189,24 @@ inline void event_manager(eventPriority priority) {
                     pEvent->eventPending = WORKING;
                     pEvent->overTmr = 0;                                            ///< Reset timer
                     time = *timer;                                                  ///< Timing function
-                    SET_AND_SAVE_CPU_IPL(save_to, LEVEL);
                     pEvent->event_callback(pEvent->argc, pEvent->argv);             ///< Launch callback
                     pEvent->eventPending = FALSE;                                   ///< Complete event
-                    RESTORE_CPU_IPL(save_to);
                     // Time of execution
-                    if(pEvent->overTmr == 0) {                  
+                    if(pEvent->overTmr == 0) {
                         pEvent->time = (*timer) - time;
                     } else {
                         pEvent->time = ((*timer) + (0xFFFF - time)
                                 + (0xFFFF * (pEvent->overTmr - 1)));
                     }
                 }
-            } else if(pEvent->eventPending == WORKING) {
+            } else if (pEvent->eventPending == WORKING) {
                 pEvent->overTmr++;
             }
         }
+    }
+    // Set low the interrupt register.
+    if (priority != EVENT_PRIORITY_CPU) {
+        REGISTER_MASK_SET_LOW(interrupts[priority].interrupt_bit->REG, interrupts[priority].interrupt_bit->CS_mask);
     }
 }
 
@@ -206,4 +214,12 @@ inline uint32_t get_time(hEvent_t hEvent) {
     if (hEvent != INVALID_EVENT_HANDLE) {
         return  events[hEvent].time*time_sys;
     } else return 0;
+}
+
+inline void CPU_controller() {
+    while(true) {
+        // Controller very low priority event
+        // This function works runtime
+        event_manager(EVENT_PRIORITY_CPU);
+    }
 }
