@@ -25,9 +25,9 @@
 #include "or_system/events.h"
 #include "or_system/task_manager.h"
 
-#include "or_peripherals/I2C/i2c_controller.h"
+#include "or_peripherals/I2C/I2C.h"
 
-#include "or_peripherals/i2c/eeprom.h"
+#include "or_peripherals/i2c/MCP24LC256.h"
 
 /******************************************************************************/
 /* Global Variable Declaration                                                */
