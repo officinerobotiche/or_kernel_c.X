@@ -122,7 +122,7 @@ extern "C" {
     /**
      * Controller CPU
      */
-    inline void CPU_controller();
+    inline void EventsController();
 
 #ifdef	__cplusplus
 }

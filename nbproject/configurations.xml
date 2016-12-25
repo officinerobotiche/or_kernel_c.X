@@ -10,17 +10,17 @@
       <logicalFolder name="f2" displayName="or_peripherals" projectFiles="true">
         <logicalFolder name="f1" displayName="GPIO" projectFiles="true">
           <itemPath>includes/or_peripherals/GPIO/gpio.h</itemPath>
+          <itemPath>includes/or_peripherals/GPIO/change_notification.h</itemPath>
         </logicalFolder>
         <logicalFolder name="f2" displayName="I2C" projectFiles="true">
-          <itemPath>includes/or_peripherals/I2C/eeprom.h</itemPath>
-          <itemPath>includes/or_peripherals/I2C/i2c_controller.h</itemPath>
           <itemPath>includes/or_peripherals/I2C/led_pcf8574.h</itemPath>
+          <itemPath>includes/or_peripherals/I2C/I2C.h</itemPath>
+          <itemPath>includes/or_peripherals/I2C/MCP24LC256.h</itemPath>
         </logicalFolder>
         <itemPath>includes/or_peripherals/led.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="or_system" projectFiles="true">
         <itemPath>includes/or_system/events.h</itemPath>
-        <itemPath>includes/or_system/modules.h</itemPath>
         <itemPath>includes/or_system/soft_timer.h</itemPath>
         <itemPath>includes/or_system/spinlock.h</itemPath>
         <itemPath>includes/or_system/task_manager.h</itemPath>
@@ -39,17 +39,17 @@
       <logicalFolder name="f3" displayName="or_peripherals" projectFiles="true">
         <logicalFolder name="f1" displayName="GPIO" projectFiles="true">
           <itemPath>src/or_peripherals/GPIO/gpio.c</itemPath>
+          <itemPath>src/or_peripherals/GPIO/change_notification.c</itemPath>
         </logicalFolder>
         <logicalFolder name="f2" displayName="I2C" projectFiles="true">
-          <itemPath>src/or_peripherals/I2C/eeprom.c</itemPath>
-          <itemPath>src/or_peripherals/I2C/i2c_controller.c</itemPath>
           <itemPath>src/or_peripherals/I2C/led_pcf8574.c</itemPath>
+          <itemPath>src/or_peripherals/I2C/I2C.c</itemPath>
+          <itemPath>src/or_peripherals/I2C/MCP24LC256.c</itemPath>
         </logicalFolder>
         <itemPath>src/or_peripherals/led.c</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="or_system" projectFiles="true">
         <itemPath>src/or_system/events.c</itemPath>
-        <itemPath>src/or_system/modules.c</itemPath>
         <itemPath>src/or_system/soft_timer.c</itemPath>
         <itemPath>src/or_system/spinlock.c</itemPath>
         <itemPath>src/or_system/task_manager.c</itemPath>

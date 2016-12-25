@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Officine Robotiche
+ * Copyright (C) 2014-2017 Officine Robotiche
  * Author: Raffaello Bonghi
  * email:  raffaello.bonghi@officinerobotiche.it
  * Permission is granted to copy, distribute, and/or modify this program

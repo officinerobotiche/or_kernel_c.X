@@ -216,7 +216,7 @@ inline uint32_t get_time(hEvent_t hEvent) {
     } else return 0;
 }
 
-inline void CPU_controller() {
+inline void EventsController() {
     while(true) {
         // Controller very low priority event
         // This function works runtime
