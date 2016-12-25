@@ -27,6 +27,7 @@ extern "C" {
 #include <string.h>
     
 #include "peripherals/gpio.h"
+#include "system/events.h"
     
 /******************************************************************************/
 /* User Level #define Macros                                                  */
@@ -46,7 +47,7 @@ extern "C" {
      *      -# n number of blink
      */
     typedef struct led_control {
-        hardware_bit_t* pin;
+        gpio_t gpio;
         unsigned int counter;
         unsigned int fr_blink;
         unsigned int wait;
@@ -59,8 +60,9 @@ extern "C" {
      * Initialization LEDs
      * @param led_controller
      * @param len
+     * @return event led controller
      */
-    void LED_Init(uint16_t freq, led_control_t* led_controller, size_t len);
+    hEvent_t LED_Init(uint16_t freq, led_control_t* led_controller, size_t len);
     /**
      * Update frequency or type of blink
      * @param led array of available leds

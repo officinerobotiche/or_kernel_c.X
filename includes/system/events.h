@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Officine Robotiche
+ * Copyright (C) 2014-2016 Officine Robotiche
  * Author: Raffaello Bonghi
  * email:  raffaello.bonghi@officinerobotiche.it
  * Permission is granted to copy, distribute, and/or modify this program
@@ -43,6 +43,8 @@ extern "C" {
         EVENT_PRIORITY_HIGH,
         EVENT_PRIORITY_VERY_LOW,
     } eventPriority;
+    /// Definition of frequency
+    typedef uint32_t frequency_t;
     /// event register number
     typedef uint16_t hEvent_t;
     /// Callback when the function start
@@ -55,8 +57,9 @@ extern "C" {
      * all register events parameter and setup timer evaluation.
      * @param timer_register Timer register
      * @param pr_timer Register counter
+     * @param frq_mcu frequency of Microcontroller
      */
-    void init_events(REGISTER timer_register, REGISTER pr_timer);
+    void init_events(REGISTER timer_register, REGISTER pr_timer, frequency_t frq_mcu, unsigned int level);
     /**
      * You can register an event interrupt, with type of priority and bit interrupt
      * @param priority type of priority
@@ -111,9 +114,9 @@ extern "C" {
     /**
      * Return time to computation the event
      * @param hEvent number event
-     * @return time to computation in [uS]
+     * @return time to computation in [nS]
      */
-    inline uint16_t get_time(hEvent_t hEvent);
+    inline uint32_t get_time(hEvent_t hEvent);
 
 #ifdef	__cplusplus
 }

@@ -36,8 +36,6 @@ extern "C" {
 
     /// Definition of Task
     typedef uint16_t hTask_t;
-    /// Definition of frequency
-    typedef uint32_t frequency_t;
     /// time function in [uS]
     typedef int16_t time_t;
     /**

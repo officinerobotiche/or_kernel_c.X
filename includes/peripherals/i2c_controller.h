@@ -39,8 +39,9 @@ extern "C" {
      * @param i2c_trn I2C transmission register
      * @param i2c_rcv I2C reception register
      * @param resetCallback additional operation when reset I2C
+     * @return Number event
      */
-    void I2C_Init(hardware_bit_t* i2c_interrupt, REGISTER i2c_con, REGISTER i2c_stat, REGISTER i2c_trn, REGISTER i2c_rcv, I2C_callbackFunc resetCallback);
+    hEvent_t I2C_Init(hardware_bit_t* i2c_interrupt, REGISTER i2c_con, REGISTER i2c_stat, REGISTER i2c_trn, REGISTER i2c_rcv, I2C_callbackFunc resetCallback);
     
     /**
      * Check for I2C ACK on command

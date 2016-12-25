@@ -151,7 +151,7 @@ inline void I2C_manager (void) {
     return;
 }
 
-void I2C_Init(hardware_bit_t* i2c_interrupt, REGISTER i2c_con, REGISTER i2c_stat, REGISTER i2c_trn, REGISTER i2c_rcv, I2C_callbackFunc resetCallback) {
+hEvent_t I2C_Init(hardware_bit_t* i2c_interrupt, REGISTER i2c_con, REGISTER i2c_stat, REGISTER i2c_trn, REGISTER i2c_rcv, I2C_callbackFunc resetCallback) {
 
     I2C_INTERRUPT = i2c_interrupt;
     I2C_CON = i2c_con;
@@ -165,7 +165,7 @@ void I2C_Init(hardware_bit_t* i2c_interrupt, REGISTER i2c_con, REGISTER i2c_stat
     I2C_service_handle = register_event_p(i2c_module, &serviceI2C, EVENT_PRIORITY_LOW);
     
     I2C_load();
-    return;
+    return I2C_service_handle;
 }
 
 /**
@@ -187,7 +187,7 @@ void I2C_load(void) {
     
     REGISTER_MASK_SET_HIGH(I2C_CON, MASK_I2CCON_EN);
     /// Set low interrupt
-    bit_low(I2C_INTERRUPT);
+    REGISTER_MASK_SET_LOW(I2C_INTERRUPT->REG, I2C_INTERRUPT->CS_mask);
     
     /// Set available
     I2C_Busy = false;
@@ -228,7 +228,7 @@ bool I2C_checkACK(unsigned int command, I2C_callbackFunc pCallback) {
     // Set ISR callback and trigger the ISR
     I2C_state = &I2C_startWrite;
     /// Set high interrupt
-    bit_high(I2C_INTERRUPT);
+    REGISTER_MASK_SET_HIGH(I2C_INTERRUPT->REG, I2C_INTERRUPT->CS_mask);
     return true;
 }
 /**
@@ -257,11 +257,8 @@ void I2C_loadCommand(unsigned char command, unsigned char* pcommandData, unsigne
         I2C_data_size.tx = 0; // tx data size
         I2C_data_size.rx = trxSize; // rx data size
     }
-
     // Set ISR callback and trigger the ISR
     I2C_state = &I2C_startWrite;
-    /// Set high interrupt
-    bit_high(I2C_INTERRUPT);
 }
 /**
  * Load in buffer the message with additional data
@@ -300,10 +297,12 @@ i2c_state_t I2C_Write(unsigned char command, unsigned char* pcommandData, unsign
 }
 
 i2c_state_t I2C_Write_data(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, unsigned char* ptxData, unsigned int txSize, I2C_callbackFunc pCallback) {
-    
+
     // Try to direct send the message
-    if(I2C_CheckAvailable() && (I2CMAXQ < I2C_QUEUE_DEPTH)) {
+    if (I2C_CheckAvailable() && (I2CMAXQ < I2C_QUEUE_DEPTH)) {
         I2C_loadCommand(command, pcommandData, commandDataSize, I2C_COMMAND_WRITE, ptxData, txSize, pCallback);
+        /// Set high interrupt
+        REGISTER_MASK_SET_HIGH(I2C_INTERRUPT->REG, I2C_INTERRUPT->CS_mask);
     } else {
         return I2C_loadBuffer(command, pcommandData, commandDataSize, I2C_COMMAND_WRITE, ptxData, txSize, pCallback);
     }
@@ -311,10 +310,12 @@ i2c_state_t I2C_Write_data(unsigned char command, unsigned char* pcommandData, u
 }
 
 i2c_state_t I2C_Read(unsigned char command, unsigned char* pcommandData, unsigned char commandDataSize, unsigned char* prxData, unsigned int rxSize, I2C_callbackFunc pCallback) {
-    
+
     // Try to direct send the message
-    if(I2C_CheckAvailable() && (I2CMAXQ < I2C_QUEUE_DEPTH)) {
+    if (I2C_CheckAvailable() && (I2CMAXQ < I2C_QUEUE_DEPTH)) {
         I2C_loadCommand(command, pcommandData, commandDataSize, I2C_COMMAND_READ, prxData, rxSize, pCallback);
+        /// Set high interrupt
+        REGISTER_MASK_SET_HIGH(I2C_INTERRUPT->REG, I2C_INTERRUPT->CS_mask);
     } else {
         return I2C_loadBuffer(command, pcommandData, commandDataSize, I2C_COMMAND_READ, prxData, rxSize, pCallback);
     }
@@ -466,12 +467,13 @@ void I2C_rerecen(void) {
  * If the queue is not empty launch other message in queue
  */
 void I2C_doneRead(void) {
-    I2C_Busy = false;
     if (pI2C_callback != NULL)
         pI2C_callback(true);
     //Check I2C available and buffer not empty
-    if(I2CMAXQ < I2C_QUEUE_DEPTH)
+    if(I2CMAXQ > 0)
         I2C_serve_queue();
+    else 
+        I2C_Busy = false;
 }
 
 /* WRITE FUNCTIONS */
@@ -515,13 +517,13 @@ void I2C_writeStop(void) {
  * If the queue is not empty launch other message in queue
  */
 void I2C_doneWrite(void) {
-    I2C_Busy = false;
     if (pI2C_callback != NULL)
         pI2C_callback(true);
     //Check I2C available and buffer not empty
-    if(I2CMAXQ < I2C_QUEUE_DEPTH)
+    if(I2CMAXQ > 0)
         I2C_serve_queue();
-    return;
+    else
+        I2C_Busy = false;
 }
 
 /* SERVICE FUNCTIONS */
@@ -538,9 +540,13 @@ void I2C_idle(void) {
 void I2C_Failed(void) {
     I2C_state = &I2C_idle;
     REGISTER_MASK_SET_HIGH(I2C_CON, MASK_I2CCON_PEN);
-    I2C_Busy = false;
     if (pI2C_callback != NULL)
         pI2C_callback(false);
+    //Check I2C available and buffer not empty
+    if(I2CMAXQ > 0)
+        I2C_serve_queue();
+    else
+        I2C_Busy = false;
 }
 /**
  * Status of I2C

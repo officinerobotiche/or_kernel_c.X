@@ -16,6 +16,7 @@
         <itemPath>includes/system/events.h</itemPath>
         <itemPath>includes/system/task_manager.h</itemPath>
         <itemPath>includes/system/modules.h</itemPath>
+        <itemPath>includes/system/soft_timer.h</itemPath>
       </logicalFolder>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
@@ -37,6 +38,7 @@
         <itemPath>src/system/events.c</itemPath>
         <itemPath>src/system/task_manager.c</itemPath>
         <itemPath>src/system/modules.c</itemPath>
+        <itemPath>src/system/soft_timer.c</itemPath>
       </logicalFolder>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
@@ -48,6 +50,8 @@
   <sourceRootList>
     <Elem>src/peripherals</Elem>
     <Elem>includes/peripherals</Elem>
+    <Elem>src/system</Elem>
+    <Elem>includes/system</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
@@ -59,8 +63,8 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>ICD3PlatformTool</platformTool>
         <languageToolchain>XC16</languageToolchain>
-        <languageToolchainVersion>1.24</languageToolchainVersion>
-        <platform>3</platform>
+        <languageToolchainVersion>1.30</languageToolchainVersion>
+        <platform>2</platform>
       </toolsSet>
       <compileType>
         <linkerTool>
@@ -74,6 +78,8 @@
           <parseOnProdLoad>false</parseOnProdLoad>
           <alternateLoadableFile></alternateLoadableFile>
         </loading>
+        <subordinates>
+        </subordinates>
       </compileType>
       <makeCustomizationType>
         <makeCustomizationPreStepEnabled>false</makeCustomizationPreStepEnabled>
@@ -88,16 +94,17 @@
         <property key="code-model" value="default"/>
         <property key="const-model" value="default"/>
         <property key="data-model" value="default"/>
+        <property key="disable-instruction-scheduling" value="false"/>
         <property key="enable-all-warnings" value="true"/>
         <property key="enable-ansi-std" value="false"/>
         <property key="enable-ansi-warnings" value="false"/>
         <property key="enable-fatal-warnings" value="false"/>
         <property key="enable-large-arrays" value="false"/>
-        <property key="enable-omit-frame-pointer" value="false"/>
+        <property key="enable-omit-frame-pointer" value="true"/>
         <property key="enable-procedural-abstraction" value="false"/>
         <property key="enable-short-double" value="false"/>
         <property key="enable-symbols" value="true"/>
-        <property key="enable-unroll-loops" value="false"/>
+        <property key="enable-unroll-loops" value="true"/>
         <property key="extra-include-directories" value=""/>
         <property key="isolate-each-function" value="false"/>
         <property key="keep-inline" value="false"/>
@@ -115,7 +122,7 @@
         <property key="oXC16gcc-sfr-warn" value="false"/>
         <property key="oXC16gcc-smar-io-lvl" value="1"/>
         <property key="oXC16gcc-smart-io-fmt" value=""/>
-        <property key="optimization-level" value="0"/>
+        <property key="optimization-level" value="1"/>
         <property key="post-instruction-scheduling" value="default"/>
         <property key="pre-instruction-scheduling" value="default"/>
         <property key="preprocessor-macros" value=""/>
@@ -181,6 +188,7 @@
         <property key="output-file-format" value="elf"/>
         <property key="relaxed-math" value="false"/>
         <property key="save-temps" value="false"/>
+        <appendMe value="-merrata=psv_trap"/>
       </C30Global>
       <ICD3PlatformTool>
         <property key="ADC 1" value="true"/>
@@ -189,6 +197,7 @@
         <property key="DAC 1" value="true"/>
         <property key="DUAL COMPARATOR" value="true"/>
         <property key="ECAN" value="true"/>
+        <property key="Freeze All Other Peripherals" value="true"/>
         <property key="I2C1" value="true"/>
         <property key="INPUT CAPTURE 1" value="true"/>
         <property key="INPUT CAPTURE 2" value="true"/>
@@ -225,6 +234,11 @@
         <property key="memories.eeprom" value="true"/>
         <property key="memories.flashdata" value="true"/>
         <property key="memories.id" value="true"/>
+        <property key="memories.instruction.ram" value="true"/>
+        <property key="memories.instruction.ram.end"
+                  value="${memories.instruction.ram.end.value}"/>
+        <property key="memories.instruction.ram.start"
+                  value="${memories.instruction.ram.start.value}"/>
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.end" value="0x157ff"/>
         <property key="memories.programmemory.partition2" value="true"/>
