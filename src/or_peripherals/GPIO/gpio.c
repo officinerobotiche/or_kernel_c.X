@@ -19,7 +19,7 @@
 /* Files to Include                                                           */
 /******************************************************************************/
 
-#include "peripherals/gpio.h"
+#include "or_peripherals/GPIO/gpio.h"
 
 /******************************************************************************/
 /* Global Variable Declaration                                                */

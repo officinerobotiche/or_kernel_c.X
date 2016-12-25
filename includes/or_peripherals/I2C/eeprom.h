@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2014-2015 Officine Robotiche
- * Author: Raffaello Bonghi
- * email:  raffaello.bonghi@officinerobotiche.it
+ * Copyright (C) 2014 Officine Robotiche
+ * Author: Guido Ottaviani
+ * email:  guido@guiott.com
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU Lesser General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -15,8 +15,8 @@
  * Public License for more details
 */
 
-#ifndef MODULES_H
-#define	MODULES_H
+#ifndef EEPROM_H
+#define	EEPROM_H
 
 #ifdef	__cplusplus
 extern "C" {
@@ -26,26 +26,44 @@ extern "C" {
 /* System Level #define Macros                                                */
 /******************************************************************************/
     
-#include <stdint.h>        /* Includes uint16_t definition                    */
-#include "data/data.h"
-    
-    /// Invalid handle for event
-    #define INVALID_MODULE_HANDLE 0xFFFF
+    typedef void (*NVMemory_callbackFunc)(bool);
 
-    /// Module register number
-    typedef uint16_t hModule_t;
-    
 /******************************************************************************/
 /* System Function Prototypes                                                 */
 /******************************************************************************/
-
-hModule_t register_module(string_data_t* name);
-
-
-
+    
+    /**
+     * 
+     */
+    void EEPROM_init(unsigned int timeout_write);
+    /**
+     * 
+     */
+    void EEPROM_service_trigger(void);
+    /**
+     * 
+     * @param eeprom_address
+     * @param rdBuffer
+     * @param address
+     * @param rdSize
+     * @param pCallback
+     * @return 
+     */
+    bool EEPROM_read(uint8_t eeprom_address, uint8_t* rdBuffer, uint16_t address, uint16_t rdSize, NVMemory_callbackFunc pCallback);
+    /**
+     * 
+     * @param eeprom_address
+     * @param wrBuffer
+     * @param address
+     * @param wrSize
+     * @param pCallback
+     * @return 
+     */
+    bool EEPROM_write(uint8_t eeprom_address, uint8_t* wrBuffer, uint16_t address, uint16_t wrSize, NVMemory_callbackFunc pCallback);
+    
 #ifdef	__cplusplus
 }
 #endif
 
-#endif	/* MODULES_H */
+#endif	/* EEPROM_H */
 

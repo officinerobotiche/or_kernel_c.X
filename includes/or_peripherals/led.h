@@ -26,8 +26,8 @@ extern "C" {
 #include <stdbool.h>       /* Includes true/false definition                  */
 #include <string.h>
     
-#include "peripherals/gpio.h"
-#include "system/events.h"
+#include "or_peripherals/GPIO/gpio.h"
+#include "or_system/events.h"
     
 /******************************************************************************/
 /* User Level #define Macros                                                  */

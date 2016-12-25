@@ -25,8 +25,8 @@ extern "C" {
 #include <stdint.h>        /* Includes uint16_t definition                    */
 #include <stdbool.h>       /* Includes true/false definition                  */
     
-#include <peripherals/gpio.h>
-#include <system/modules.h>
+#include "or_peripherals/GPIO/gpio.h"
+#include "or_system/modules.h"
 
 /******************************************************************************/
 /* System Level #define Macros                                                */

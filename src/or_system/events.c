@@ -21,8 +21,8 @@
 
 #include <xc.h>
 
-#include "system/events.h"
-#include "peripherals/gpio.h"
+#include "or_system/events.h"
+#include "or_peripherals/GPIO/gpio.h"
 
 /// Max number of events
 #define MAX_EVENTS 16

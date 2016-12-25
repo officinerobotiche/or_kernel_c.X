@@ -24,8 +24,8 @@
 
 #include <stdbool.h>       /* Includes true/false definition */
 
-#include "peripherals/i2c_controller.h"
-#include "system/modules.h"
+#include "or_peripherals/I2C/i2c_controller.h"
+#include "or_system/modules.h"
 
 /// Define mask type of bit
 #define MASK_I2CCON_EN           BIT_MASK(15)

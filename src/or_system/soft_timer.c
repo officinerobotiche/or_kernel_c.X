@@ -21,7 +21,7 @@
 
 #include <xc.h>
 
-#include "system/soft_timer.h"
+#include "or_system/soft_timer.h"
 
 #define MICRO 1000000
 

@@ -19,8 +19,8 @@
 /* Files to Include                                                           */
 /******************************************************************************/
 
-#include "peripherals/led.h"
-#include "system/task_manager.h"
+#include "or_peripherals/led.h"
+#include "or_system/task_manager.h"
 
 /******************************************************************************/
 /* Global Variable Declaration                                                */

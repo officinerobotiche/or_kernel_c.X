@@ -23,8 +23,8 @@ extern "C" {
 #endif
 
     #include <stdarg.h>
-    #include "system/events.h"
-    #include "system/modules.h"
+    #include "or_system/events.h"
+    #include "or_system/modules.h"
 
 /******************************************************************************/
 /* System Level #define Macros                                                */

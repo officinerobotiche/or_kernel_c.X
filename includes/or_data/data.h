@@ -23,7 +23,7 @@ extern "C" {
 #endif
 
 #include <string.h>    
-#include "peripherals/gpio.h"
+#include "or_peripherals/GPIO/gpio.h"
 
 /******************************************************************************/
 /* User Level #define Macros                                                  */

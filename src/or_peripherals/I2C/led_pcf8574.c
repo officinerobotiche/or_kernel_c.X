@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2014-2015 Officine Robotiche
- * Author: Raffaello Bonghi
- * email:  raffaello.bonghi@officinerobotiche.it
+ * Copyright (C) 2015 Officine Robotiche
+ * Author: Mauro Soligo
+ * email:  mauro.soligo@katodo.com
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU Lesser General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -13,26 +13,45 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details
+ * 
+ * Original code:
+ * https://code.google.com/p/gentlenav/source/browse/trunk/libUDB/24LC256.c
  */
 
-/******************************************************************************/
+/*****************************************************************************/
 /* Files to Include                                                           */
 /******************************************************************************/
 
-#include "system/modules.h"
+#include "or_system/events.h"
+
+#include "or_peripherals/I2C/i2c_controller.h"
 
 /******************************************************************************/
 /* Global Variable Declaration                                                */
 /******************************************************************************/
 
-/******************************************************************************/
-/* Communication Functions                                                    */
-/******************************************************************************/
+#define PCF8574_LED_COMMAND  0x40
 
-void init_modules(void) {
+uint8_t wrBuffer[3] = {0, 7, 8};
+//uint8_t wrBuffer1[3] = {2, 3, 4};
+bool pcf8574_led_not_busy = true;
+
+static void PCF8574_LED_callback(bool callback_status);
+
+bool PCF8574_LED_write(unsigned char led) {
+    bool status;
     
+    wrBuffer[0] = ~led;
+
+    if(pcf8574_led_not_busy) {
+        status = I2C_Write(PCF8574_LED_COMMAND, wrBuffer, 1, &PCF8574_LED_callback);
+        pcf8574_led_not_busy = false;
+    }
+    return true;
 }
 
-hModule_t register_module(string_data_t* name) {
-    return (hModule_t) name;
+static void PCF8574_LED_callback(bool callback_status) {
+    pcf8574_led_not_busy = callback_status;
+
 }
+
