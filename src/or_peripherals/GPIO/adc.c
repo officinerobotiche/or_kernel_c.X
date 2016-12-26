@@ -50,6 +50,9 @@ void gpio_adc_init(REGISTER analog) {
     hADCEvent_t adc_eventIndex;
     for(adc_eventIndex = 0; adc_eventIndex < MAX_ADC_EVENT; ++adc_eventIndex) {
         ADC_event[adc_eventIndex].adc_pin = NULL;
+        ADC_event[adc_eventIndex].cb = NULL;
+        ADC_event[adc_eventIndex].size = 0;
+        ADC_event[adc_eventIndex].obj NULL;
     }
     // Default set low digital all ADC pins
     REGISTER_MASK_SET_HIGH(analog, 0xFFFF);
@@ -104,6 +107,8 @@ inline void ADC_controller(unsigned int *buffer) {
             adcEvent->adc_pin[adc_pinIndex].value /= adcEvent->adc_pin[adc_pinIndex].length;
         }
         // Run the ADC event
-        adcEvent->cb(adcEvent->obj);
+        if(adcEvent->cb != NULL) {
+            adcEvent->cb(adcEvent->obj);
+        }
     }
 }
