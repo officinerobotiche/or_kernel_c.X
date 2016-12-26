@@ -43,22 +43,20 @@ void serviceLED(int argc, int* argv) {
     LED_blinkController((led_control_t*) argv[0], (size_t) argv[1]);
 }
 
-hEvent_t LED_Init(uint16_t freq, led_control_t* led_controller, size_t len) {
+void LED_Init(uint16_t freq, led_control_t* led_controller, size_t len) {
     int i;
     freq_cqu = freq;
     for (i = 0; i < len; ++i) {
         led_controller[i].wait = 0;
-        gpio_register(&led_controller[i].gpio);
+        gpio_init_pin(&led_controller[i].gpio);
         LED_updateBlink(led_controller, i, LED_OFF);
     }
     /// Register event
-    LED_service_handle = register_event_p(&serviceLED, EVENT_PRIORITY_LOW);
+    LED_service_handle = register_event(&serviceLED);
     
     LED_task_handle = task_load_data(LED_service_handle, freq_cqu, 2, led_controller, len);
     /// Run task controller
     task_set(LED_task_handle, RUN);
-    
-    return LED_service_handle;
 }
 
 void LED_updateBlink(led_control_t* led_controller, short num, short blink) {

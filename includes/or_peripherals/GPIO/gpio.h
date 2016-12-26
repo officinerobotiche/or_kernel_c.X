@@ -22,6 +22,10 @@
 extern "C" {
 #endif
 
+/******************************************************************************/
+/*	INCLUDE																	  */
+/******************************************************************************/
+    
 #include <stdarg.h>
 #include <stdint.h>        /* Includes uint16_t definition                    */
 #include <stdbool.h>       /* Includes true/false definition                  */
@@ -33,34 +37,6 @@ extern "C" {
     
     /// Build a Max bit in x position
     #define BIT_MASK(x)                       (1 << (x))
-    #define GPIO_NO_PERIPHERAL NULL
-    #define GPIO_ANALOG_CONF(array, an) \
-                (array).number = (an);  \
-                (array).value = 0;
-
-    //Rule of thumb: Always read inputs from PORTx and write outputs to LATx. 
-    //If you need to read what you set an output to, read LATx.
-    /// Port builder
-    //#define GPIO_INIT(x, n, type)             {&(TRIS##x), &(PORT##x), &(LAT##x), BIT_MASK(n), (type)}
-    #define GPIO_INIT_TYPE(array, x, n, type_n)  \
-                (array).CS_TRIS = &(TRIS##x);    \
-                (array).CS_PORT = &(PORT##x);    \
-                (array).CS_LAT = &(LAT##x);      \
-                (array).CS_mask = BIT_MASK((n)); \
-                (array).type = (type_n);
-    /// Simple initialization a GPIO
-    #define GPIO_INIT(array, x, n)  GPIO_INIT_TYPE((array).gpio, x, n, GPIO_INPUT)  \
-                                        (array).common.analog = GPIO_NO_PERIPHERAL;
-    /// Initialization with analog
-    #define GPIO_INIT_ANALOG(array, x, n, adc) GPIO_INIT_TYPE((array).gpio, x, n, GPIO_INPUT) \
-                                                (array).common.analog = (gp_analog_t*) adc;
-    /// GPIO port builder
-    #define GPIO_PORT_INIT(port, GP, SIZE)      \
-                (port).gpio = (GP);             \
-                (port).len = (SIZE);
-    /// Initialize hardware_bit_t with name register and bit mask
-    #define REGISTER_INIT(reg, x)             {&(reg), BIT_MASK(x)}
-
     /// Set high bits in register with selected mask
     #define REGISTER_MASK_SET_HIGH(reg, mask) (*(reg) |= (mask))
     /// Set low bits in register with selected mask
@@ -69,16 +45,20 @@ extern "C" {
     #define REGISTER_MASK_TOGGLE(reg, mask)   (*(reg) ^= (mask))
     /// Read bits in register with selected mask
     #define REGISTER_MASK_READ(reg, mask)     ((*(reg) & (mask)) == (mask))
-    /// Callback to configure the ADC
-    typedef bool (*gpio_adc_callbackFunc_t)(void);
+
     /**
-     * 
+     * Configuration GPIO
      */
     typedef enum {
         GPIO_INPUT = 1,
-        GPIO_OUTPUT = 0,
-        GPIO_ANALOG = 2
+        GPIO_OUTPUT = 0
     } gpio_type_t;
+    
+    typedef enum {
+        GPIO_HIGH = 1,
+        GPIO_LOW = 0
+    } gpio_state_t;
+
     /// Generic definition for register
     typedef volatile unsigned int * REGISTER;
     /**
@@ -90,20 +70,9 @@ extern "C" {
         REGISTER REG;
         unsigned int CS_mask;
     } hardware_bit_t;
-    /**
-     * 
-     */
-    typedef short gpio_name_t;
-    /**
-     * 
-     */
-    typedef struct _gpio_port {
-        uint8_t len;
-        int16_t port;
-    } gpio_port_t;
-    /**
-     * 
-     */
+    /// Initialize hardware_bit_t with name register and bit mask
+    #define REGISTER_INIT(reg, x)             {&(reg), BIT_MASK(x)}
+    
     typedef struct _gpio {
         REGISTER CS_TRIS;
         REGISTER CS_PORT;
@@ -111,93 +80,67 @@ extern "C" {
         unsigned int CS_mask;
         gpio_type_t type;
     } gpio_t;
-    /**
-     * 
-     */
-    typedef struct _gp_analog {
-        unsigned short number;
-        int value;
-    } gp_analog_t;
-    /**
-     * 
-     */
-    typedef struct _gp_common {
-        gp_analog_t* analog;
-        hardware_bit_t* generic;
-    } gp_common_t;
-    /**
-     * 
-     */
-    typedef struct _gp_peripheral {
-        gpio_t gpio;
-        gp_common_t common;
-    } gp_peripheral_t;
-    /**
-     * 
-     */
-    typedef struct _gp_port_def {
-        gp_peripheral_t* gpio;
-        size_t len;
-    } gp_port_def_t;
+    //Rule of thumb: Always read inputs from PORTx and write outputs to LATx. 
+    //If you need to read what you set an output to, read LATx.
+    /// Port builder
+    #define GPIO_INIT(x, n, type) {&(TRIS##x), &(PORT##x), &(LAT##x), BIT_MASK((n)), type}
+    #define GPIO_INIT_OUT(x, n) GPIO_INIT(x, n, GPIO_OUTPUT)
+    #define GPIO_INIT_IN(x, n) GPIO_INIT(x, n, GPIO_INPUT)
     
 /******************************************************************************/
-/* System Function Prototypes                                                 */
+/*	FUNCTIONS							 									  */
 /******************************************************************************/
     
     /**
-     * 
-     * @param gpio
-     * @param len
+     * @brief Initialization GPIO pin
+     * @param pin the pin to initialize
      */
-    bool gpio_init(hardware_bit_t* analog_on, hardware_bit_t* dma_on, REGISTER analog, gpio_adc_callbackFunc_t call, int len, ...);
+    inline void gpio_init_pin(gpio_t *pin);
     /**
-     * 
-     * @param port
+     * @brief Initialization GPIO port
+     * @param port the port to initialize
+     * @param size the size of the port
      */
-    void gpio_register(gpio_t* port);
+    void gpio_init_port(gpio_t *port, size_t size);
     /**
-     * 
-     * @param port
+     * @brief Change configuration of the GPIO pin
+     * @param pin the pin to change
+     * @param type the new type
      */
-    bool gpio_register_peripheral(gp_peripheral_t* port);
+    inline void gpio_config_pin(gpio_t *pin, gpio_type_t type);
     /**
-     * 
-     * @param port
-     * @param type
+     * @brief Change configuration of GPIO port
+     * @param port The port to change
+     * @param conf the new configuration
+     * @param size the size of the port
      */
-    void gpio_setup(gpio_name_t name, uint16_t port, gpio_type_t type);
+    void gpio_config_port(gpio_t *port, REGISTER conf, size_t size);
     /**
-     * 
-     * @param name
-     * @param port
-     * @return 
+     * @brief Set the level of the GPIO pin
+     * @param port the GPIO pin
+     * @param value the new state of the GPIO pin
      */
-    gpio_type_t gpio_config(gpio_name_t name, short port);
+    inline void gpio_set_pin(gpio_t *port, gpio_state_t value);
     /**
-     * 
-     * @param gpioIdx
-     * @return 
+     * @brief set new level GPIO port
+     * @param port the GPIO port
+     * @param value the new values for the GPIO port
+     * @param size the size of the port
      */
-    int gpio_get_analog(gpio_name_t name, short gpioIdx);
+    void gpio_set_port(gpio_t *port, int value, size_t size);
     /**
-     * 
-     * @return 
+     * @brief get state of the GPIO pin
+     * @param port the GPIO pin
+     * @return the value of the pin
      */
-    gpio_port_t gpio_get(gpio_name_t name);
-    
+    inline int gpio_get_pin(gpio_t *port);
     /**
-     * 
-     * @param port
-     * @return 
+     * @brief get state of the GPIO port
+     * @param port the GPIO port
+     * @param size the size of the port
+     * @return the value of the port
      */
-    void gpio_set(gpio_name_t name, gpio_port_t port);
-    
-    /**
-     * 
-     * @param idx
-     * @param value
-     */
-    inline void gpio_ProcessADCSamples(short idx, int value);
+    int gpio_get_port(gpio_t *port, size_t size);
 
 #ifdef	__cplusplus
 }

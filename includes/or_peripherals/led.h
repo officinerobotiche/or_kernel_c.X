@@ -53,6 +53,8 @@ extern "C" {
         unsigned int wait;
         short number_blink;
     } led_control_t;
+    // Initialization change notification pin
+    #define GPIO_LED(x, n) { GPIO_INIT_IN(x, n), 0, 0, 0, 0 }
 /******************************************************************************/
 /* User Function Prototypes                                                   */
 /******************************************************************************/
@@ -60,9 +62,8 @@ extern "C" {
      * Initialization LEDs
      * @param led_controller
      * @param len
-     * @return event led controller
      */
-    hEvent_t LED_Init(uint16_t freq, led_control_t* led_controller, size_t len);
+    void LED_Init(uint16_t freq, led_control_t* led_controller, size_t len);
     /**
      * Update frequency or type of blink
      * @param led array of available leds
