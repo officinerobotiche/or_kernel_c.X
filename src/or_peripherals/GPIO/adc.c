@@ -52,7 +52,7 @@ void gpio_adc_init(REGISTER analog) {
         ADC_event[adc_eventIndex].adc_pin = NULL;
         ADC_event[adc_eventIndex].cb = NULL;
         ADC_event[adc_eventIndex].size = 0;
-        ADC_event[adc_eventIndex].obj NULL;
+        ADC_event[adc_eventIndex].obj = NULL;
     }
     // Default set low digital all ADC pins
     REGISTER_MASK_SET_HIGH(analog, 0xFFFF);
@@ -71,6 +71,8 @@ hADCEvent_t gpio_adc_register(gpio_adc_t *adc, size_t size, adc_callback_t cb, v
             for(i = 0; i < ADC_event[adc_eventIndex].size; ++i) {
                 gpio_init_pin(&ADC_event[adc_eventIndex].adc_pin[i].gpio);
                 gpio_set_pin(&ADC_event[adc_eventIndex].adc_pin[i].gpio, GPIO_OUTPUT);
+                REGISTER_MASK_SET_LOW(ADC_event[adc_eventIndex].adc_pin[i].ANALOG, 
+                        ADC_event[adc_eventIndex].adc_pin[i].CS_mask);
             }
             return adc_eventIndex;
         }
