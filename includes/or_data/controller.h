@@ -35,6 +35,18 @@ extern "C" {
         const char* string;
         unsigned int len;
     } string_data_t;
+    
+    typedef uint16_t data_address_t;
+    
+    typedef void (*data_controller_cb)(bool status);
+    
+    typedef bool (*data_func)(void *type, data_address_t address, int *buff, size_t size, data_controller_cb cb);
+    
+    typedef struct {
+        data_func writer;
+        data_func reader;
+        void *obj;
+    } DATA_controller_t;
 /******************************************************************************/
 /* User Function Prototypes                                                   */
 /******************************************************************************/
@@ -46,6 +58,9 @@ extern "C" {
      * @param num size of data
      */
     void protectedMemcpy(hardware_bit_t* reg, void *destination, const void *source, size_t num);
+
+    
+void DATA_controller_init(DATA_controller_t *controller, void* obj, data_func writer, data_func reader);
 
 #ifdef	__cplusplus
 }

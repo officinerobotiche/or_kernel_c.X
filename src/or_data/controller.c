@@ -38,3 +38,25 @@ void inline protectedMemcpy(hardware_bit_t* reg, void *destination, const void *
         memcpy(destination, source, num);
     }
 }
+
+void DATA_controller_init(DATA_controller_t *controller, void* obj, data_func writer, data_func reader) {
+    controller->writer = writer;
+    controller->reader = reader;
+    controller->obj = obj;
+}
+
+void DATA_controller_write_cb(bool status) {
+    
+}
+
+void DATA_controller_write(DATA_controller_t *controller, data_address_t address, int *buff, size_t size) {
+    controller->writer(controller->obj, address, buff, size, DATA_controller_write_cb);
+}
+
+void DATA_controller_read_cb(bool status) {
+    
+}
+
+void DATA_controller_read(DATA_controller_t *controller, data_address_t address, int *buff, size_t size) {
+    controller->reader(controller->obj, address, buff, size, DATA_controller_read_cb);
+}
