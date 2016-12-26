@@ -46,15 +46,31 @@ extern "C" {
      *      -# 0 led off - LED_OFF
      *      -# n number of blink
      */
-    typedef struct led_control {
+    typedef struct _LED {
         gpio_t gpio;
         unsigned int counter;
         unsigned int fr_blink;
         unsigned int wait;
         short number_blink;
-    } led_control_t;
+    } LED_t;
     // Initialization change notification pin
     #define GPIO_LED(x, n) { GPIO_INIT_IN(x, n), 0, 0, 0, 0 }
+
+    typedef struct _LED_controller {
+        // The LED array
+        LED_t *leds;
+        // The size of LED array
+        size_t size;
+        // Frequency to execution
+        frequency_t freq_cqu;
+        // If led effect running
+        bool led_effect;
+        // If first launch of effect
+        bool first;
+    } LED_controller_t;
+    // Initialization change notification pin
+    #define LED_CONTROLLER(led, size, frq) { led, size, frq, false, true}
+    
 /******************************************************************************/
 /* User Function Prototypes                                                   */
 /******************************************************************************/
@@ -63,34 +79,28 @@ extern "C" {
      * @param led_controller
      * @param len
      */
-    void LED_Init(uint16_t freq, led_control_t* led_controller, size_t len);
+    void LED_Init(LED_controller_t *controller);
     /**
      * Update frequency or type of blink
      * @param led array of available leds
      * @param num number led
      * @param blink number of blinks
      */
-    void LED_updateBlink(led_control_t *led, short num, short blink);
-    /**
-     * Blink controller for leds. This function you must add in timer function
-     * @param led to control
-     * @param len number of registered led
-     */
-    inline void LED_blinkController(led_control_t *led, size_t len);
+    void LED_updateBlink(LED_controller_t *controller, short num, short blink);
     /**
      * Start led effect flush
      * @param led_controller list of all leds
      * @param load_blink 
      * @param len number of registered led
      */
-    void LED_blinkFlush(led_control_t* led_controller, short* load_blink, size_t len);
+    void LED_blinkFlush(LED_controller_t *controller, int* load_blink);
     /**
      * Stop all led effects
      * @param led_controller list of all leds
      * @param load_blink
      * @param len number of registered led
      */
-    void LED_effectStop(led_control_t* led_controller, short* load_blink, size_t len);
+    void LED_effectStop(LED_controller_t *controller, int* load_blink);
 
 
 #ifdef	__cplusplus

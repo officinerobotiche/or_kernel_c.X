@@ -25,57 +25,10 @@
 /******************************************************************************/
 /* Global Variable Declaration                                                */
 /******************************************************************************/
-/// If led effect running
-bool led_effect = false;
-/// If first launch of effect
-bool first = true;
-/// Frequency to execution
-frequency_t freq_cqu;
-/// Led event handle
-static hEvent_t LED_service_handle = INVALID_EVENT_HANDLE;
-/// Led task handle
-static hTask_t LED_task_handle = INVALID_TASK_HANDLE;
+
 /*****************************************************************************/
 /* Communication Functions                                                   */
 /*****************************************************************************/
-
-void serviceLED(int argc, int* argv) {
-    LED_blinkController((led_control_t*) argv[0], (size_t) argv[1]);
-}
-
-void LED_Init(uint16_t freq, led_control_t* led_controller, size_t len) {
-    int i;
-    freq_cqu = freq;
-    for (i = 0; i < len; ++i) {
-        led_controller[i].wait = 0;
-        gpio_init_pin(&led_controller[i].gpio);
-        LED_updateBlink(led_controller, i, LED_OFF);
-    }
-    /// Register event
-    LED_service_handle = register_event(&serviceLED);
-    
-    LED_task_handle = task_load_data(LED_service_handle, freq_cqu, 2, led_controller, len);
-    /// Run task controller
-    task_set(LED_task_handle, RUN);
-}
-
-void LED_updateBlink(led_control_t* led_controller, short num, short blink) {
-    led_controller[num].number_blink = blink;
-    switch (led_controller[num].number_blink) {
-        case LED_OFF:
-            //Clear bit - Set to 0
-            REGISTER_MASK_SET_LOW(led_controller[num].gpio.CS_PORT, led_controller[num].gpio.CS_mask);
-            break;
-        case LED_ALWAYS_HIGH:
-            //Set bit - Set to 1
-            REGISTER_MASK_SET_HIGH(led_controller[num].gpio.CS_PORT, led_controller[num].gpio.CS_mask);
-            break;
-        default:
-            led_controller[num].fr_blink = freq_cqu / (2 * led_controller[num].number_blink);
-            break;
-    }
-    led_controller[num].counter = 0;
-}
 
 /**
  * Tc -> counter = 1sec = 1000 interrupts
@@ -87,54 +40,93 @@ void LED_updateBlink(led_control_t* led_controller, short num, short blink) {
  * ! WAIT   Tc/2-WAIT  !   Tc/2       !
  */
 
-inline void LED_blinkController(led_control_t *led, size_t len) {
-    short i;
-    for(i = 0; i < len; ++i) {
-        if (led[i].number_blink > LED_OFF) {
-            if (led[i].counter > led[i].wait && led[i].counter < freq_cqu) {
-                if (led[i].counter % led[i].fr_blink == 0) {
+inline void LED_blinkController(int argc, int* argv) {
+    LED_controller_t *controller = (LED_controller_t *) &argv[0];
+    unsigned int i;
+    for(i = 0; i < controller->size; ++i) {
+        if (controller->leds[i].number_blink > LED_OFF) {
+            if (controller->leds[i].counter > controller->leds[i].wait && 
+                    controller->leds[i].counter < controller->freq_cqu) {
+                if (controller->leds[i].counter % controller->leds[i].fr_blink == 0) {
                     //Toggle bit
-                    REGISTER_MASK_TOGGLE(led[i].gpio.CS_PORT, led[i].gpio.CS_mask);
+                    REGISTER_MASK_TOGGLE(controller->leds[i].gpio.CS_PORT, 
+                            controller->leds[i].gpio.CS_mask);
                 }
-                led[i].counter++;
-            } else if (led[i].counter >= 3 * freq_cqu / 2) {
-                led[i].counter = 0;
+                controller->leds[i].counter++;
+            } else if (controller->leds[i].counter >= 3 * controller->freq_cqu / 2) {
+                controller->leds[i].counter = 0;
             } else {
                 //Clear bit - Set to 0
-                REGISTER_MASK_SET_LOW(led[i].gpio.CS_PORT, led[i].gpio.CS_mask);
-                led[i].counter++;
+                REGISTER_MASK_SET_LOW(controller->leds[i].gpio.CS_PORT, 
+                        controller->leds[i].gpio.CS_mask);
+                controller->leds[i].counter++;
             }
         }
     }
 }
 
-void LED_blinkFlush(led_control_t* led_controller, short* load_blink, size_t len) {
-    int i;
-    for (i = 0; i < len; ++i) {
-        led_controller[i].wait = i * ((float) freq_cqu / len);
-        load_blink[i] = led_controller[i].number_blink;
-        LED_updateBlink(led_controller, i, 1);
+void LED_Init(LED_controller_t *controller) {
+    unsigned int i;
+    // Initialize all LED and set OFF
+    for (i = 0; i < controller->size; ++i) {
+        gpio_init_pin(&controller->leds[i].gpio);
+        LED_updateBlink(controller, i, LED_OFF);
     }
-    led_effect = true;
+    /// Register event
+    hEvent_t LED_service_handle = register_event(&LED_blinkController);
+    // Register task
+    hTask_t LED_task_handle = task_load_data(LED_service_handle, controller->freq_cqu, 1, controller);
+    /// Run task controller
+    task_set(LED_task_handle, RUN);
 }
 
-void LED_effectStop(led_control_t* led_controller, short* load_blink, size_t len) {
+void LED_updateBlink(LED_controller_t *controller, short num, short blink) {
+    controller->leds[num].number_blink = blink;
+    switch (controller->leds[num].number_blink) {
+        case LED_OFF:
+            //Clear bit - Set to 0
+            REGISTER_MASK_SET_LOW(controller->leds[num].gpio.CS_PORT, 
+                    controller->leds[num].gpio.CS_mask);
+            break;
+        case LED_ALWAYS_HIGH:
+            //Set bit - Set to 1
+            REGISTER_MASK_SET_HIGH(controller->leds[num].gpio.CS_PORT, 
+                    controller->leds[num].gpio.CS_mask);
+            break;
+        default:
+            controller->leds[num].fr_blink = controller->freq_cqu / (2 * controller->leds[num].number_blink);
+            break;
+    }
+    controller->leds[num].counter = 0;
+}
+
+void LED_blinkFlush(LED_controller_t *controller, int* load_blink) {
+    int i;
+    for (i = 0; i < controller->size; ++i) {
+        controller->leds[i].wait = i * ((float) controller->freq_cqu / controller->size);
+        load_blink[i] = controller->leds[i].number_blink;
+        LED_updateBlink(controller, i, 1);
+    }
+    controller->led_effect = true;
+}
+
+void LED_effectStop(LED_controller_t *controller, int* load_blink) {
     int i;
     int value = 0;
-    if (led_effect) {
-        for (i = 0; i < len; ++i) {
-            value += led_controller[i].counter;
+    if (controller->led_effect) {
+        for (i = 0; i < controller->size; ++i) {
+            value += controller->leds[i].counter;
         }
         if (value == 0) {
-            if (~first) {
-                for (i = 0; i < len; ++i) {
-                    LED_updateBlink(led_controller, i, load_blink[i]);
-                    led_controller[i].wait = 0;
+            if (~controller->first) {
+                for (i = 0; i < controller->size; ++i) {
+                    LED_updateBlink(controller, i, load_blink[i]);
+                    controller->leds[i].wait = 0;
                 }
-                led_effect = false;
-                first = true;
+                controller->led_effect = false;
+                controller->first = true;
             } else {
-                first = false;
+                controller->first = false;
             }
         }
     }
