@@ -27,7 +27,7 @@
 
 #include "or_peripherals/I2C/I2C.h"
 
-#include "or_peripherals/i2c/MCP24LC256.h"
+#include "or_peripherals/I2C/MCP24LC256.h"
 
 /******************************************************************************/
 /* Global Variable Declaration                                                */
