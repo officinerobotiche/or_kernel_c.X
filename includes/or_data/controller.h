@@ -22,45 +22,111 @@
 extern "C" {
 #endif
 
-#include <string.h>    
-#include "or_peripherals/GPIO/gpio.h"
-
 /******************************************************************************/
-/* User Level #define Macros                                                  */
+/*	INCLUDE																	  */
 /******************************************************************************/
-    /**
-     * Definition of string, with poin pointer to string and relative length
-     */
-    typedef struct _string_data {
-        const char* string;
-        unsigned int len;
-    } string_data_t;
+    
+#include <stdbool.h>
+#include <string.h>
+#include <stdint.h>
+    
+/******************************************************************************/
+/* System Level #define Macros                                                */
+/******************************************************************************/
+    
+    typedef enum {
+        DATA_ERROR_LENGTH,
+        DATA_ERROR_CHECKSUM,
+        DATA_DONE
+    } DATA_status_t;
     
     typedef uint16_t data_address_t;
     
-    typedef void (*data_controller_cb)(bool status);
+    typedef void (*data_controller_cb)(void *obj, bool status);
     
-    typedef bool (*data_func)(void *type, data_address_t address, int *buff, size_t size, data_controller_cb cb);
+    typedef bool (*data_func)(void *type, data_address_t address, int *buff, size_t size, data_controller_cb cb, void *obj);
     
     typedef struct {
         data_func writer;
         data_func reader;
+        // The pointer of the structure controller of driver
         void *obj;
+        // The pointer of buffer
+        int *buff;
+        // The size of buffer to write
+        size_t length;
+        // The return callback
+        data_controller_cb cb;
+        // the return object
+        void *obj_recall;
+        
+        int *read_buff;
+        data_address_t address;
+        unsigned int counter;
+        unsigned int number_copy;
+        size_t size_storing;
+        bool status;
+        // bool wait blocking function complete
+        bool block_wait;
     } DATA_controller_t;
-/******************************************************************************/
-/* User Function Prototypes                                                   */
-/******************************************************************************/
-    /**
-     * Protected memcpy, stop particular interrupt and copy data.
-     * @param reg Interrupt to disable
-     * @param destination data
-     * @param source data
-     * @param num size of data
-     */
-    void protectedMemcpy(hardware_bit_t* reg, void *destination, const void *source, size_t num);
-
     
-void DATA_controller_init(DATA_controller_t *controller, void* obj, data_func writer, data_func reader);
+/******************************************************************************/
+/*	FUNCTIONS							 									  */
+/******************************************************************************/
+/**
+ * 
+ * @param controller
+ * @param obj
+ * @param writer
+ * @param reader
+ * @param buff
+ */
+void DATA_controller_init(DATA_controller_t *controller, void* obj, 
+        data_func writer, data_func reader, int *buff);
+/**
+ * 
+ * @param controller
+ * @param address
+ * @param buff
+ * @param size
+ * @param cb
+ * @param obj
+ * @return 
+ */
+bool DATA_controller_write(DATA_controller_t *controller, data_address_t address, 
+        int *buff, size_t size, data_controller_cb cb, void *obj);
+/**
+ * 
+ * @param controller
+ * @param address
+ * @param buff
+ * @param size
+ * @return 
+ */
+bool DATA_controller_blocking_write(DATA_controller_t *controller, data_address_t address,
+        int *buff, size_t size);
+/**
+ * 
+ * @param controller
+ * @param address
+ * @param buff
+ * @param size
+ * @param cb
+ * @param obj
+ * @return 
+ */
+bool DATA_controller_read(DATA_controller_t *controller, data_address_t address, 
+        int *buff, size_t size, data_controller_cb cb, void *obj);
+/**
+ * 
+ * @param controller
+ * @param address
+ * @param buff
+ * @param size
+ * @return 
+ */
+bool DATA_controller_blocking_read(DATA_controller_t *controller, data_address_t address, 
+        int *buff, size_t size);
 
 #ifdef	__cplusplus
 }

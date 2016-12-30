@@ -23,12 +23,17 @@
 /******************************************************************************/
 
 #include "or_peripherals/SPI/SPI.h"
+#include "or_system/task_manager.h"
+
+#ifndef EE24LC512_DEFAULT_FREQ_CHECK
+#define EE24LC512_DEFAULT_FREQ_CHECK 500
+#endif
 
 /******************************************************************************/
 /*	Define																	  */
 /******************************************************************************/
 
-typedef void (*EE24LC512_cb)(bool status);
+typedef void (*EE24LC512_cb)(void *obj, bool status);
 
 typedef struct _STATREG {
     char WIP : 1;
@@ -42,64 +47,104 @@ typedef struct _STATREG {
 typedef struct _EEPROMConf {
     SPI_CS_pin_t CS;
     SPI_conf_t *SPI;
+    hTask_t MeterCheck_task;
+    EE24LC512_cb cb;
+    void *obj;
 } EE24LC512Conf_t;
+
+#define EE24LC512CONF_INIT(CS, SPI) {CS, &(SPI), INVALID_TASK_HANDLE, NULL, NULL}
 
 /******************************************************************************/
 /* System Function Prototypes                                                 */
 /******************************************************************************/
 /**
  * @brief Initialization EEPROM
- * @param EEPROMConf
+ * @param EEPROMConf The configuration of EEPROM 25LC512
  */
 void EE24LC512_init(EE24LC512Conf_t* EEPROMConf);
-
 /**
- * 
- * @param EEPROMConf
- * @param address
- * @param data
+ * @brief Write a single byte on EEPROM. This function recall inside EE24LC512_write.
+ * @param EEPROMConf The configuration of EEPROM 25LC512
+ * @param address The address to write
+ * @param data The data
  */
-bool EEPROM_write_single(EE24LC512Conf_t* EEPROMConf, uint16_t Address, int data);
+bool EEPROM_write_single(EE24LC512Conf_t* EEPROMConf, uint16_t Address, int8_t data);
 /**
- * 
- * @param EEPROMConf
- * @param address
- * @param buff
- * @param size
+ * @brief Write a buffer on EEPROM. This function recall inside EE24LC512_write.
+ * @param EEPROMConf The configuration of EEPROM 25LC512
+ * @param address The address to write
+ * @param buff The buffer to write inside the EEPROM
+ * @param size The size of the buffer
+ * @return If the write success return true
  */
-bool EE24LC512_write(void* EEPROM, uint16_t Address, int *buff, size_t size, EE24LC512_cb cb);
+bool EE24LC512_write_data(EE24LC512Conf_t* EEPROM, uint16_t Address, int8_t *buff, size_t size);
 /**
- * 
- * @param EEPROM
- * @param Address
- * @param buff
- * @param size
- * @return 
+ * @brief Write a buffer on EEPROM. This function is compliant with data controller 
+ * functions. You can use a callback when the data is completely written.
+ * @param EEPROMConf The configuration of EEPROM 25LC512
+ * @param address The address to write
+ * @param buff The buffer to write inside the EEPROM
+ * @param size The size of the buffer
+ * @param cb If set the callback, this function will be no blocking
+ * @param obj the pointer data to return the value
+ * @return If no blocking return always true
  */
-bool EE24LC512_write_data(EE24LC512Conf_t* EEPROM, uint16_t Address, int *buff, size_t size);
+bool EE24LC512_write(void* EEPROM, uint16_t Address, int *buff, size_t size, EE24LC512_cb cb, void *obj);
 /**
- * 
- * @param EEPROMConf
- * @param Address
- * @return 
+ * @brief Read a byte from EEPROM. This function recall inside EE24LC512_read.
+ * @param EEPROMConf The configuration of EEPROM 25LC512
+ * @param address The address to read
+ * @return The data read
  */
 uint8_t EE24LC512_read_byte(EE24LC512Conf_t* EEPROMConf, uint16_t Address);
 /**
- * 
- * @param EEPROMConf
- * @param Address
- * @param buff
- * @param size
+ * @brief Read a buffer from EEPROM. This function recall inside EE24LC512_read.
+ * @param EEPROMConf The configuration of EEPROM 25LC512
+ * @param address The address to read
+ * @param buff The buffer to store the data read in EEPROM
+ * @param size The size of the buffer
  */
-bool EE24LC512_read(void* EEPROMConf, uint16_t Address, int *buff, size_t size, EE24LC512_cb cb);
+bool EE24LC512_read_data(EE24LC512Conf_t* EEPROM, uint16_t Address, int8_t *buff, size_t size);
 /**
- * 
- * @param EEPROM
- * @param Address
- * @param buff
- * @param size
- * @return 
+ * @brief Read a buffer from EEPROM. This function is compliant with data controller 
+ * functions. You can use a callback when the data is completely read.
+ * @param EEPROMConf The configuration of EEPROM 25LC512
+ * @param address The address to read
+ * @param buff The buffer to store the data read in EEPROM
+ * @param size The size of the buffer
+ * @param cb If set the callback, this function will be no blocking
+ * @param obj the pointer data to return the value
+ * @return If no blocking return always true
  */
-bool EE24LC512_read_data(EE24LC512Conf_t* EEPROM, uint16_t Address, int *buff, size_t size);
+bool EE24LC512_read(void* EEPROMConf, uint16_t Address, int *buff, size_t size, EE24LC512_cb cb, void *obj);
+/**
+ * @brief Erase a page from EEPROM. This function is compliant with data controller 
+ * functions. You can use a callback when the data is completely erase.
+ * @param EEPROMConf The configuration of EEPROM 25LC512
+ * @param address The address to erase
+ * @param cb If set the callback, this function will be no blocking
+ * @param obj the pointer data to return the value
+ * @return If no blocking return always true
+ */
+bool EE24LC512_erase_page(void* EEPROM, uint16_t Address, EE24LC512_cb cb, void *obj);
+/**
+ * @brief Erase a sector from EEPROM. This function is compliant with data controller 
+ * functions. You can use a callback when the data is completely erase.
+ * @param EEPROMConf The configuration of EEPROM 25LC512
+ * @param address The address to erase
+ * @param cb If set the callback, this function will be no blocking
+ * @param obj the pointer data to return the value
+ * @return If no blocking return always true
+ */
+bool EE24LC512_erase_sector(void* EEPROM, uint16_t Address, EE24LC512_cb cb, void *obj);
+/**
+ * @brief Erase the EEPROM. This function is compliant with data controller 
+ * functions. You can use a callback when the data is completely erase.
+ * @param EEPROMConf The configuration of EEPROM 25LC512
+ * @param cb If set the callback, this function will be no blocking
+ * @param obj the pointer data to return the value
+ * @return If no blocking return always true
+ */
+bool EE24LC512_erase_chip(void* EEPROM, EE24LC512_cb cb, void *obj);
 
 #endif

@@ -101,6 +101,7 @@ hTask_t task_load_data(hEvent_t hEvent, frequency_t frequency, int argc, ...) {
 bool task_set(hTask_t hTask, task_status_t run) {
     if(hTask != INVALID_TASK_HANDLE) {
         tasks[hTask].run = run;
+        tasks[hTask].counter = 0;
         return true;
     }
     return false;
