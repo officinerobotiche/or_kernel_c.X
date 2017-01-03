@@ -94,6 +94,12 @@ void SPI_enable(SPI_conf_t *SPI, bool enable);
  */
 bool SPI_isEnable(SPI_conf_t *SPI);
 /**
+ * @brief Set locking communication
+ * @param SPI
+ * @param lock
+ */
+inline void SPI_lock(SPI_conf_t *SPI, bool lock);
+/**
  * 
  * @param data
  * @return 

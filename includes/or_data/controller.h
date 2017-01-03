@@ -42,9 +42,9 @@ extern "C" {
     
     typedef uint16_t data_address_t;
     
-    typedef void (*data_controller_cb)(void *obj, bool status);
+    typedef void (*data_controller_cb)(void *obj, int status);
     
-    typedef bool (*data_func)(void *type, data_address_t address, int *buff, size_t size, data_controller_cb cb, void *obj);
+    typedef bool (*data_func)(void *type, data_address_t address, char *buff, size_t size, data_controller_cb cb, void *obj);
     
     typedef struct {
         data_func writer;
@@ -52,7 +52,7 @@ extern "C" {
         // The pointer of the structure controller of driver
         void *obj;
         // The pointer of buffer
-        int *buff;
+        char *buff;
         // The size of buffer to write
         size_t length;
         // The return callback
@@ -60,13 +60,15 @@ extern "C" {
         // the return object
         void *obj_recall;
         
-        int *read_buff;
+        unsigned int counter_write;
+        
+        char *start_buff;
         data_address_t address;
         unsigned int counter;
         unsigned int number_copy;
         size_t size_storing;
         bool status;
-        // bool wait blocking function complete
+        // boolean to wait blocking function
         bool block_wait;
     } DATA_controller_t;
     
@@ -82,7 +84,7 @@ extern "C" {
  * @param buff
  */
 void DATA_controller_init(DATA_controller_t *controller, void* obj, 
-        data_func writer, data_func reader, int *buff);
+        data_func writer, data_func reader, char *buff, unsigned int num_cp, unsigned int size_mem);
 /**
  * 
  * @param controller
@@ -94,7 +96,7 @@ void DATA_controller_init(DATA_controller_t *controller, void* obj,
  * @return 
  */
 bool DATA_controller_write(DATA_controller_t *controller, data_address_t address, 
-        int *buff, size_t size, data_controller_cb cb, void *obj);
+        char *buff, size_t size, data_controller_cb cb, void *obj);
 /**
  * 
  * @param controller
@@ -104,7 +106,7 @@ bool DATA_controller_write(DATA_controller_t *controller, data_address_t address
  * @return 
  */
 bool DATA_controller_blocking_write(DATA_controller_t *controller, data_address_t address,
-        int *buff, size_t size);
+        char *buff, size_t size);
 /**
  * 
  * @param controller
@@ -116,7 +118,7 @@ bool DATA_controller_blocking_write(DATA_controller_t *controller, data_address_
  * @return 
  */
 bool DATA_controller_read(DATA_controller_t *controller, data_address_t address, 
-        int *buff, size_t size, data_controller_cb cb, void *obj);
+        char *buff, size_t size, data_controller_cb cb, void *obj);
 /**
  * 
  * @param controller
@@ -126,7 +128,7 @@ bool DATA_controller_read(DATA_controller_t *controller, data_address_t address,
  * @return 
  */
 bool DATA_controller_blocking_read(DATA_controller_t *controller, data_address_t address, 
-        int *buff, size_t size);
+        char *buff, size_t size);
 
 #ifdef	__cplusplus
 }

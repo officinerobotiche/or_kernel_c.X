@@ -30,7 +30,7 @@
 
 #define LNG_DATA_HEADER 3
 
-void DATA_controller_write_cb(void *obj, bool status);
+void DATA_controller_write_cb(void *obj, int status);
 
 /******************************************************************************/
 /* Variable Declaration                                                       */
@@ -40,20 +40,24 @@ void DATA_controller_write_cb(void *obj, bool status);
 /* Functions                                                                  */
 /******************************************************************************/
 
-void DATA_controller_init(DATA_controller_t *controller, void* obj, data_func writer, data_func reader, int *buff) {
+void DATA_controller_init(DATA_controller_t *controller, void* obj, 
+        data_func writer, data_func reader, char *buff, unsigned int num_cp, unsigned int size_mem) {
     controller->writer = writer;
     controller->reader = reader;
     controller->obj = obj;
     // Reference buffer address
     controller->buff = buff;
+    // Setup number copies and size memory
+    controller->number_copy = num_cp;
+    controller->size_storing = size_mem;
 }
 
-void DATA_controller_blocking_cb(void *obj, bool status) {
+void DATA_controller_blocking_cb(void *obj, int status) {
     DATA_controller_t *controller = (DATA_controller_t*) obj;
     controller->block_wait = false;
 }
 
-inline void DATA_controller_builder_buffer(DATA_controller_t *controller, int *buff, size_t size) {
+inline void DATA_controller_builder_buffer(DATA_controller_t *controller, char *buff, size_t size) {
     unsigned int i;
     uint16_t cks = 0;
     // Add length structure
@@ -67,7 +71,6 @@ inline void DATA_controller_builder_buffer(DATA_controller_t *controller, int *b
     // Add the checksum in the last line
     controller->buff[size+1] = Hi(cks);
     controller->buff[size+2] = Lo(cks);
-    controller->length = size + LNG_DATA_HEADER;
 }
 
 inline DATA_status_t DATA_controller_check_buffer(DATA_controller_t *controller) {
@@ -82,48 +85,49 @@ inline DATA_status_t DATA_controller_check_buffer(DATA_controller_t *controller)
     for(i = 0; i < size; ++i) {
         cks += controller->buff[i+1];
     }
-    uint16_t cks_read = (controller->buff[size+1] << 8) + controller->buff[size+2];
+    uint16_t cks_read = (controller->buff[size+1] << 8) + Lo(controller->buff[size+2]);
     if(cks != cks_read) {
         return DATA_ERROR_CHECKSUM;
     }
     return DATA_DONE;
 }
 
-void DATA_controller_check_cb(void *obj, bool status) {
+void DATA_controller_check_cb(void *obj, int status) {
     DATA_controller_t *controller = (DATA_controller_t*) obj;
     if(status) {
-        if(controller->counter == controller->number_copy) {
+        // Write on storing function the buffer with all data
+        data_address_t page = (controller->address << 7) + (controller->counter << 12);
+        // Run read controller
+        controller->reader(controller->obj, page, controller->buff,
+                controller->length, &DATA_controller_write_cb, controller);
+    }
+}
+
+void DATA_controller_write_cb(void *obj, int status) {
+    DATA_controller_t *controller = (DATA_controller_t*) obj;
+    if(status) {
+        if(DATA_controller_check_buffer(controller) == DATA_DONE) {
+            controller->counter_write++;
+        }
+        if (controller->counter == controller->number_copy - 1) {
             // Complete write and launch the callback
-            controller->cb(controller->obj_recall, true);
+            controller->cb(controller->obj_recall, controller->counter_write);
         } else {
-            DATA_controller_check_buffer(controller);
             // increase the counter
             controller->counter++;
+            size_t size = controller->length - LNG_DATA_HEADER;
+            // Build a data to write
+            DATA_controller_builder_buffer(controller, controller->start_buff, size);
             // Write on storing function the buffer with all data
-            data_address_t local_addr = controller->address + 
-                        controller->counter*(controller->size_storing / controller->number_copy);
+            data_address_t page = (controller->address << 7) + (controller->counter << 12);
             // Write in new area
-            controller->writer(controller->obj, local_addr, controller->buff, 
-                        controller->length, &DATA_controller_write_cb, controller);
+            controller->writer(controller->obj, page, controller->buff,
+                    controller->length, &DATA_controller_check_cb, controller);
         }
-    } else {
-        // launch the callback with error
-        controller->cb(controller->obj_recall, false);
     }
 }
 
-void DATA_controller_write_cb(void *obj, bool status) {
-    if(status) {
-        DATA_controller_t *controller = (DATA_controller_t*) obj;
-        // Write on storing function the buffer with all data
-        data_address_t local_addr = controller->address + controller->counter*(controller->size_storing / controller->number_copy);
-        // Read the same area
-        controller->reader(controller->obj, local_addr, controller->buff, 
-                controller->length, &DATA_controller_check_cb, controller);
-    }
-}
-
-bool DATA_controller_write(DATA_controller_t *controller, data_address_t address, int *buff, size_t size, data_controller_cb cb, void *obj) {
+bool DATA_controller_write(DATA_controller_t *controller, data_address_t address, char *buff, size_t size, data_controller_cb cb, void *obj) {
     // Save the callback and object
     if(cb == NULL) {
         controller->cb = &DATA_controller_blocking_cb;
@@ -137,11 +141,18 @@ bool DATA_controller_write(DATA_controller_t *controller, data_address_t address
     controller->address = address;
     // reset counter
     controller->counter = 0;
+    // The page to write the data
+    data_address_t page = (controller->address << 7) + (controller->counter << 12);
+    // reset counter good write
+    controller->counter_write = 0;
+    // Save pointer read buffer
+    controller->start_buff = buff;
+    controller->length = size + LNG_DATA_HEADER;
     // Build a data to write
-    DATA_controller_builder_buffer(controller, buff, size);
+    DATA_controller_builder_buffer(controller, controller->start_buff, size);
     // Write data
-    controller->writer(controller->obj, address, controller->buff, 
-                controller->length, &DATA_controller_write_cb, controller);
+    controller->writer(controller->obj, page, controller->buff, 
+                controller->length, &DATA_controller_check_cb, controller);
     // Blocking function
     if(cb == NULL) {
         // Wait the complete read
@@ -150,16 +161,16 @@ bool DATA_controller_write(DATA_controller_t *controller, data_address_t address
     return true;
 }
 
-bool DATA_controller_blocking_write(DATA_controller_t *controller, data_address_t address, int *buff, size_t size) {
+bool DATA_controller_blocking_write(DATA_controller_t *controller, data_address_t address, char *buff, size_t size) {
     return DATA_controller_write(controller, address, buff, size, NULL, NULL);
 }
 
-void DATA_controller_read_cb(void *obj, bool status) {
+void DATA_controller_read_cb(void *obj, int status) {
     DATA_controller_t *controller = (DATA_controller_t*) obj;
     if(status) {
         if(DATA_controller_check_buffer(controller) == DATA_DONE) {
             // Copy the data on read buffer
-            memcpy(&controller->read_buff, &controller->buff[1], controller->buff[0]);
+            memcpy(controller->start_buff, &controller->buff[1], controller->buff[0]);
             // Complete read and launch the callback
             controller->cb(controller->obj_recall, true);
         } else {
@@ -169,9 +180,11 @@ void DATA_controller_read_cb(void *obj, bool status) {
             } else {
                 // increase the counter
                 controller->counter++;
+                // Write on storing function the buffer with all data
+                data_address_t page = (controller->address << 7) + (controller->counter << 12);
                 // Run read controller
-                controller->reader(controller->obj, controller->address, controller->buff, 
-                    controller->length, DATA_controller_read_cb, controller);
+                controller->reader(controller->obj, page, controller->buff,
+                        controller->length, &DATA_controller_read_cb, controller);
             }
         }
     } else {
@@ -180,7 +193,7 @@ void DATA_controller_read_cb(void *obj, bool status) {
     }
 }
 
-bool DATA_controller_read(DATA_controller_t *controller, data_address_t address, int *buff, size_t size, data_controller_cb cb, void *obj) {
+bool DATA_controller_read(DATA_controller_t *controller, data_address_t address, char *buff, size_t size, data_controller_cb cb, void *obj) {
     // Save the callback and object
     if(cb == NULL) {
         controller->cb = &DATA_controller_blocking_cb;
@@ -194,13 +207,15 @@ bool DATA_controller_read(DATA_controller_t *controller, data_address_t address,
     controller->address = address;
     // reset counter
     controller->counter = 0;
+    // The page to read the data
+    data_address_t page = (controller->address << 7) + (controller->counter << 12);
     // Save pointer read buffer
-    controller->read_buff = buff;
+    controller->start_buff = buff;
     // Set length to read
     controller->length = size + LNG_DATA_HEADER;
     // Run read controller
-    controller->reader(controller->obj, address, controller->buff, 
-                controller->length, DATA_controller_read_cb, controller);
+    controller->reader(controller->obj, page, controller->buff, 
+                controller->length, &DATA_controller_read_cb, controller);
     // Blocking function
     if(cb == NULL) {
         // Wait the complete read
@@ -209,6 +224,6 @@ bool DATA_controller_read(DATA_controller_t *controller, data_address_t address,
     return true;
 }
 
-bool DATA_controller_blocking_read(DATA_controller_t *controller, data_address_t address, int *buff, size_t size) {
+bool DATA_controller_blocking_read(DATA_controller_t *controller, data_address_t address, char *buff, size_t size) {
     return DATA_controller_read(controller, address, buff, size, NULL, NULL);
 }

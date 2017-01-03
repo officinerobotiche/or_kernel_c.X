@@ -21,12 +21,6 @@
 
 #include "or_peripherals/SPI/SPI.h"
 
-/******************************************************************************/
-/* Variable Declaration                                                       */
-/******************************************************************************/
-
-#include <xc.h>
-
 #define SPI_STAT_ENABLE BIT_MASK(15)
 #define SPI_STAT_MASK_TBF BIT_MASK(1)
 #define SPI_STAT_MASK_RBF BIT_MASK(0)
@@ -116,6 +110,10 @@ inline void __attribute__((always_inline)) SPI_CS_Low(SPI_CS_pin_t *CS) {
     } else {
         gpio_set_pin(&CS->port, GPIO_HIGH);
     }
+}
+
+inline void __attribute__((always_inline)) SPI_lock(SPI_conf_t *SPI, bool lock) {
+    SPI->lock = lock;
 }
 
 inline int __attribute__((always_inline)) SPI_read_write(SPI_conf_t *SPI, int data) {
