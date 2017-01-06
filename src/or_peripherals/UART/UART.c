@@ -38,9 +38,10 @@ inline void UART_read_callback (int argc, int* argv);
 /* Functions                                                                  */
 /******************************************************************************/
 
-void UART_register_write(UART_WRITE_t *write, REGISTER UARTTX) {
+void UART_register_write(UART_WRITE_t *write, REGISTER UARTTX, UART_ext_write cb) {
     unsigned int i;
     // Initialization register and variables
+    write->cb = cb;
     write->UARTTX = UARTTX;
     write->lock = false;
     // Initialize buffer UART queue
@@ -65,6 +66,11 @@ void UART_register_read(UART_READ_t *read, REGISTER port, REGISTER reg, unsigned
     read->buff_rx_out = 0;
     // reset buffer in RX pointer
     read->buff_rx_in = 0;
+}
+
+bool UART_setBaudrate(UART_t* UART, unsigned long baudrate) {
+    *UART->UBRG = ((UART->fcy/baudrate)/16)-1;  // Baud rate initialization
+    return true;
 }
 
 inline bool UART_isLocked(UART_t* UART) {
@@ -105,7 +111,12 @@ inline void UART_serve_queue(UART_t* UART) {
     unsigned int i;
     if (UART->write->queue_counter < LNG_UART_TX_QUEUE) {
         for(i = 0; i < LNG_UART_TX_QUEUE; ++i) {
-            UART_write_in_port(UART, UART->write->queque[i].buff, UART->write->queque[i].size);
+            // If the external write is initialized run the write controller outside
+            if(UART->write->cb != NULL) {
+                UART->write->cb(UART, UART->write->queque[i].buff, UART->write->queque[i].size);
+            } else {
+                UART_write_in_port(UART, UART->write->queque[i].buff, UART->write->queque[i].size);
+            }
             UART->write->queue_counter--;
             UART->write->queque[i].pending = false;
         }
@@ -119,7 +130,12 @@ inline UART_state_t UART_write(UART_t* UART, unsigned char* buff, size_t size) {
         return UART_store(UART, buff, size);
     } else {
         // otherwise send all data in UART port
-        UART_write_in_port(UART, buff, size);
+        if(UART->write->cb != NULL) {
+            // If the external write is initialized run the write controller outside
+            UART->write->cb(UART, buff, size);
+        } else {
+            UART_write_in_port(UART, buff, size);
+        }
         // Send all stored data
         while(UART->write->queue_counter > 0) {
             UART_serve_queue(UART);

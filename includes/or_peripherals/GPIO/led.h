@@ -54,7 +54,7 @@ extern "C" {
         short number_blink;
     } LED_t;
     // Initialization change notification pin
-    #define GPIO_LED(x, n) { GPIO_INIT_IN(x, n), 0, 0, 0, 0 }
+    #define GPIO_LED(x, n) { GPIO_INIT_OUT(x, n), 0, 0, 0, 0 }
 
     typedef struct _LED_controller {
         // The LED array

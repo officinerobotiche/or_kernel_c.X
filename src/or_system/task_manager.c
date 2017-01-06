@@ -30,7 +30,7 @@
  * Running or not
  * associated event
  * internal counter of event
- * frequency of esecution in [uS]
+ * frequency of execution in [uS]
  * number of arguments
  * arguments
  */
@@ -43,7 +43,6 @@ typedef struct _tagTASK {
     int argc;
     int argv[MAX_ARGV];
 } TASK;
-
 /******************************************************************************/
 /* Global Variable Declaration                                                */
 /******************************************************************************/

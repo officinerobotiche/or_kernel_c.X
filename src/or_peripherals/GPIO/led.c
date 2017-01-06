@@ -41,7 +41,7 @@
  */
 
 inline void LED_blinkController(int argc, int* argv) {
-    LED_controller_t *controller = (LED_controller_t *) &argv[0];
+    LED_controller_t *controller = (LED_controller_t *) argv[0];
     unsigned int i;
     for(i = 0; i < controller->size; ++i) {
         if (controller->leds[i].number_blink > LED_OFF) {

@@ -51,9 +51,12 @@ extern "C" {
         size_t size;
     } UARTbuff_t;
     
+    typedef void (*UART_ext_write)(void* UART, unsigned char* buff, size_t size);
+    
     typedef struct _UART_WRITE {
         REGISTER UARTTX;
         bool lock;
+        UART_ext_write cb;
         unsigned int queue_counter;
         UARTbuff_t queque[LNG_UART_TX_QUEUE];
     } UART_WRITE_t;
@@ -74,12 +77,14 @@ extern "C" {
     typedef struct _UART {
         REGISTER UARTSTA;
         REGISTER UARTMODE;
+        REGISTER UBRG;
+        frequency_t fcy;
         UART_WRITE_t *write;
         UART_READ_t *read;
     } UART_t;
     
-#define UART_INIT(status, mode, write, read) {&(status), &(mode), write, read}
-    
+#define UART_INIT(status, mode, ubrg, fcy, write, read) {&(status), &(mode), &(ubrg), fcy, write, read}
+        
 /******************************************************************************/
 /* System Function Prototypes                                                 */
 /******************************************************************************/
@@ -87,8 +92,10 @@ extern "C" {
  * @breif registration UART write controller
  * @param write The structure with write UART configuration
  * @param UARTTX The Transmitter register
+ * @param cb If initialized the write call this external function. Useful with
+ * DMA controller.
  */
-void UART_register_write(UART_WRITE_t *write, REGISTER UARTTX);
+void UART_register_write(UART_WRITE_t *write, REGISTER UARTTX, UART_ext_write cb);
 /**
  * 
  * @param read
@@ -98,6 +105,13 @@ void UART_register_write(UART_WRITE_t *write, REGISTER UARTTX);
  * @param cb
  */
 void UART_register_read(UART_READ_t *read, REGISTER port, REGISTER reg, unsigned int x, UART_read_cb cb);
+/**
+ * 
+ * @param UART
+ * @param baudrate
+ * @return 
+ */
+bool UART_setBaudrate(UART_t* UART, unsigned long baudrate);
 /**
  * @brief The UART write controller. Required UART write configured.
  * @param UART The structure with UART configuration
