@@ -20,12 +20,16 @@
 /******************************************************************************/
 
 #include "or_peripherals/GPIO/adc.h"
+#include "or_system/spinlock.h"
 
 #include "or_system/events.h"
 
 /******************************************************************************/
 /* Definition                                                                 */
 /******************************************************************************/
+
+#define ADC_ADCON_ENABLE BIT_MASK(15)
+lock_t adc_lock;
 
 typedef struct _tagEventADC {
     gpio_adc_t *adc_pin;
@@ -40,13 +44,21 @@ typedef struct _tagEventADC {
 
 /// Declare an array with all interrupts
 ADC_EVENT ADC_event[MAX_ADC_EVENT];
+REGISTER _AD1CON;
 
 /******************************************************************************/
 /* Functions                                                                  */
 /******************************************************************************/
 
+void gpio_adc_enable(bool enable) {
+    if(enable) {
+        REGISTER_MASK_SET_HIGH(_AD1CON, ADC_ADCON_ENABLE);
+    } else {
+        REGISTER_MASK_SET_LOW(_AD1CON, ADC_ADCON_ENABLE);
+    }
+}
 
-void gpio_adc_init(REGISTER analog) {
+void gpio_adc_init(REGISTER AD1CON, REGISTER analog) {
     hADCEvent_t adc_eventIndex;
     for(adc_eventIndex = 0; adc_eventIndex < MAX_ADC_EVENT; ++adc_eventIndex) {
         ADC_event[adc_eventIndex].adc_pin = NULL;
@@ -54,6 +66,7 @@ void gpio_adc_init(REGISTER analog) {
         ADC_event[adc_eventIndex].size = 0;
         ADC_event[adc_eventIndex].obj = NULL;
     }
+    _AD1CON = AD1CON;
     // Default set low digital all ADC pins
     REGISTER_MASK_SET_HIGH(analog, 0xFFFF);
 }
@@ -63,6 +76,7 @@ hADCEvent_t gpio_adc_register(gpio_adc_t *adc, size_t size, adc_callback_t cb, v
     unsigned int i;
     for(adc_eventIndex = 0; adc_eventIndex < MAX_ADC_EVENT; ++adc_eventIndex) {
         if(ADC_event[adc_eventIndex].adc_pin == NULL) {
+            spin_lock(&adc_lock, 7);
             ADC_event[adc_eventIndex].adc_pin = adc;
             ADC_event[adc_eventIndex].size = size;
             ADC_event[adc_eventIndex].cb = cb;
@@ -74,13 +88,14 @@ hADCEvent_t gpio_adc_register(gpio_adc_t *adc, size_t size, adc_callback_t cb, v
                 REGISTER_MASK_SET_LOW(ADC_event[adc_eventIndex].adc_pin[i].ANALOG, 
                         ADC_event[adc_eventIndex].adc_pin[i].CS_mask);
             }
+            spin_unlock(&adc_lock);
             return adc_eventIndex;
         }
     }
     return INVALID_ADC_EVENT_HANDLE;
 }
 
-void gpio_adc_enable(hADCEvent_t adc_eventIndex, bool enable) {
+void gpio_adc_pin_enable(hADCEvent_t adc_eventIndex, bool enable) {
     unsigned int i;
     if(adc_eventIndex != INVALID_ADC_EVENT_HANDLE) {
         for(i = 0; i < ADC_event[adc_eventIndex].size; ++i) {
@@ -100,6 +115,7 @@ inline void ADC_controller(unsigned int *buffer) {
     ADC_EVENT *adcEvent;
     unsigned int i, adc_pinIndex;
     unsigned long temp;
+    lock(&adc_lock, true);
     for (adc_eventIndex = 0; adc_eventIndex < MAX_ADC_EVENT; ++adc_eventIndex) {
         adcEvent = &ADC_event[adc_eventIndex];
         for(adc_pinIndex = 0; adc_pinIndex < adcEvent->size; ++adc_pinIndex) {
@@ -113,4 +129,5 @@ inline void ADC_controller(unsigned int *buffer) {
             adcEvent->cb(adcEvent->obj);
         }
     }
+    lock(&adc_lock, false);
 }

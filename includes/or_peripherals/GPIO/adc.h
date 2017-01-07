@@ -53,13 +53,31 @@ extern "C" {
 /******************************************************************************/
 /*	FUNCTIONS							 									  */
 /******************************************************************************/
-
-    void gpio_adc_init(REGISTER analog);
-    
+    /**
+     * 
+     * @param ADCON
+     * @param analog
+     */
+    void gpio_adc_init(REGISTER ADCON, REGISTER analog);
+    /**
+     * 
+     * @param adc
+     * @param size
+     * @param cb
+     * @param obj
+     * @return 
+     */
     hADCEvent_t gpio_adc_register(gpio_adc_t *adc, size_t size, adc_callback_t cb, void* obj);
-    
-    void gpio_adc_enable(hADCEvent_t adc_eventIndex, bool enable);
-    
+    /**
+     * 
+     * @param adc_eventIndex
+     * @param enable
+     */
+    void gpio_adc_pin_enable(hADCEvent_t adc_eventIndex, bool enable);
+    /**
+     * 
+     * @param buffer
+     */
     inline void ADC_controller(unsigned int *buffer);
 
 #ifdef	__cplusplus
