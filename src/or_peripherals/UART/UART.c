@@ -111,14 +111,17 @@ inline void UART_serve_queue(UART_t* UART) {
     unsigned int i;
     if (UART->write->queue_counter < LNG_UART_TX_QUEUE) {
         for(i = 0; i < LNG_UART_TX_QUEUE; ++i) {
-            // If the external write is initialized run the write controller outside
-            if(UART->write->cb != NULL) {
-                UART->write->cb(UART, UART->write->queque[i].buff, UART->write->queque[i].size);
-            } else {
-                UART_write_in_port(UART, UART->write->queque[i].buff, UART->write->queque[i].size);
+            // If pending run the callback
+            if(UART->write->queque[i].pending == true) {
+                // If the external write is initialized run the write controller outside
+                if(UART->write->cb != NULL) {
+                    UART->write->cb(UART, UART->write->queque[i].buff, UART->write->queque[i].size);
+                } else {
+                    UART_write_in_port(UART, UART->write->queque[i].buff, UART->write->queque[i].size);
+                }
+                UART->write->queue_counter--;
+                UART->write->queque[i].pending = false;
             }
-            UART->write->queue_counter--;
-            UART->write->queque[i].pending = false;
         }
     }
 }
@@ -154,10 +157,8 @@ inline void UART_read_callback (int argc, int* argv) {
         // Launch the read callback
         UART->read->UART_read_cb(rxdata);
         // Update buffer RX out pointer
-        UART->read->buff_rx_out++;
-        if(UART->read->buff_rx_out > LNG_UART_RX_QUEUE) {
-            UART->read->buff_rx_out = 0;
-        }
+        UART->read->buff_rx_out = 
+                ((UART->read->buff_rx_out + 1) % LNG_UART_RX_QUEUE);
     }
     // Unlock reader
     UART->read->lock = false;
@@ -180,11 +181,10 @@ inline void UART_read(UART_t* UART) {
         }
         // Add in buffer the new char read
         UART->read->buff[UART->read->buff_rx_in] = rxdata;
-        // Increase counter
-        UART->read->buff_rx_in++;
-        // Reset buffer
-        if(UART->read->buff_rx_in > LNG_UART_RX_QUEUE) {
-            UART->read->buff_rx_in = 0;
+        // Increase the counter
+        unsigned int count = ((UART->read->buff_rx_in + 1) % LNG_UART_RX_QUEUE);
+        if(count != UART->read->buff_rx_out) {
+            UART->read->buff_rx_in = count;
         }
         if(UART->read->lock == false) {
             // Run the read event

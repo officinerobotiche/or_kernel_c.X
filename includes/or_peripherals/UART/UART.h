@@ -36,7 +36,7 @@ extern "C" {
 #endif
     
 #ifndef LNG_UART_RX_QUEUE
-#define LNG_UART_RX_QUEUE 20
+#define LNG_UART_RX_QUEUE 200
 #endif
 
     typedef enum {
