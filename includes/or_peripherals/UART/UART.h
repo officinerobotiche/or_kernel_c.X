@@ -33,6 +33,7 @@ extern "C" {
 
 #ifndef LNG_UART_TX_QUEUE
 #define LNG_UART_TX_QUEUE 4
+#define LNG_UART_TX_QUEUE_BUFF 50
 #endif
     
 #ifndef LNG_UART_RX_QUEUE
@@ -47,7 +48,7 @@ extern "C" {
     
     typedef struct _UARTbuff {
         bool pending;
-        unsigned char *buff;
+        unsigned char buff[LNG_UART_TX_QUEUE_BUFF];
         size_t size;
     } UARTbuff_t;
     

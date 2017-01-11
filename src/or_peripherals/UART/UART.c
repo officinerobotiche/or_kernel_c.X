@@ -47,7 +47,6 @@ void UART_register_write(UART_WRITE_t *write, REGISTER UARTTX, UART_ext_write cb
     // Initialize buffer UART queue
     for(i = 0; i < LNG_UART_TX_QUEUE; ++i) {
         write->queque[i].pending = false;
-        write->queque[i].buff = NULL;
         write->queque[i].size = 0;
     }
     // Initialize UART queue counter
@@ -79,14 +78,16 @@ inline bool UART_isLocked(UART_t* UART) {
 
 inline UART_state_t UART_store(UART_t* UART, unsigned char* buff, size_t size) {
     unsigned int i;
-    if (UART->write->queue_counter < LNG_UART_TX_QUEUE) {
-        for(i = 0; i < LNG_UART_TX_QUEUE; ++i) {
-            if(UART->write->queque[i].pending == false) {
-                UART->write->queque[i].pending = true;
-                UART->write->queque[i].buff = buff;
-                UART->write->queque[i].size = size;
-                UART->write->queue_counter++;
-                return UART_STATE_PENDING;
+    if (size < LNG_UART_TX_QUEUE_BUFF) {
+        if (UART->write->queue_counter < LNG_UART_TX_QUEUE) {
+            for (i = 0; i < LNG_UART_TX_QUEUE; ++i) {
+                if (UART->write->queque[i].pending == false) {
+                    UART->write->queque[i].pending = true;
+                    memmove(&UART->write->queque[i].buff, buff, size);
+                    UART->write->queque[i].size = size;
+                    UART->write->queue_counter++;
+                    return UART_STATE_PENDING;
+                }
             }
         }
     }
