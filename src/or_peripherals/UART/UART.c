@@ -76,6 +76,8 @@ inline bool UART_isLocked(UART_t* UART) {
     return UART->write->lock;
 }
 
+static int temp = 0;
+
 inline UART_state_t UART_store(UART_t* UART, unsigned char* buff, size_t size) {
     unsigned int i;
     if (size < LNG_UART_TX_QUEUE_BUFF) {
@@ -91,21 +93,18 @@ inline UART_state_t UART_store(UART_t* UART, unsigned char* buff, size_t size) {
             }
         }
     }
+    temp = 1;
     return UART_STATE_FALSE;
 }
 
 inline void UART_write_in_port(UART_t* UART, unsigned char* buff, size_t size) {
     unsigned int i;
-    //Lock the UART communication
-    UART->write->lock = true;
     for (i = 0; i < size; i++) {
         // Write a data in buffer
         *UART->write->UARTTX = buff[i];
         // Check if transmit Shift register is empty
         while(REGISTER_MASK_READ(UART->UARTSTA, UART_STAT_MASK_TRMT) == 0);
     }
-    // Unlock the UART write
-    UART->write->lock = false;
 }
 
 inline void UART_serve_queue(UART_t* UART) {
@@ -116,7 +115,7 @@ inline void UART_serve_queue(UART_t* UART) {
             if(UART->write->queque[i].pending == true) {
                 // If the external write is initialized run the write controller outside
                 if(UART->write->cb != NULL) {
-                    UART->write->cb(UART, UART->write->queque[i].buff, UART->write->queque[i].size);
+                    UART->write->cb(UART->write->queque[i].buff, UART->write->queque[i].size);
                 } else {
                     UART_write_in_port(UART, UART->write->queque[i].buff, UART->write->queque[i].size);
                 }
@@ -127,22 +126,31 @@ inline void UART_serve_queue(UART_t* UART) {
     }
 }
 
+inline void UART_write_flush_buffer(UART_t* UART) {
+    // Send all stored data
+    while(UART->write->queue_counter > 0) {
+        UART_serve_queue(UART);
+    }
+    // Unlock the UART write
+    UART->write->lock = false;
+}
+
 inline UART_state_t UART_write(UART_t* UART, unsigned char* buff, size_t size) {
     // Check if UART communication is blocked
     if(UART->write->lock) {
         // If locked store the data to send in buffer
         return UART_store(UART, buff, size);
     } else {
+        //Lock the UART communication
+        UART->write->lock = true;
         // otherwise send all data in UART port
         if(UART->write->cb != NULL) {
             // If the external write is initialized run the write controller outside
-            UART->write->cb(UART, buff, size);
+            UART->write->cb(buff, size);
         } else {
             UART_write_in_port(UART, buff, size);
-        }
-        // Send all stored data
-        while(UART->write->queue_counter > 0) {
-            UART_serve_queue(UART);
+            // Send all stored data
+            UART_write_flush_buffer(UART);
         }
         return UART_STATE_TRUE;
     }

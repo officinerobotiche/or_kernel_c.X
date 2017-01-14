@@ -32,8 +32,8 @@ extern "C" {
     #include "or_system/events.h"
 
 #ifndef LNG_UART_TX_QUEUE
-#define LNG_UART_TX_QUEUE 4
-#define LNG_UART_TX_QUEUE_BUFF 50
+#define LNG_UART_TX_QUEUE 2
+#define LNG_UART_TX_QUEUE_BUFF 150
 #endif
     
 #ifndef LNG_UART_RX_QUEUE
@@ -52,7 +52,7 @@ extern "C" {
         size_t size;
     } UARTbuff_t;
     
-    typedef void (*UART_ext_write)(void* UART, unsigned char* buff, size_t size);
+    typedef void (*UART_ext_write)(unsigned char* buff, size_t size);
     
     typedef struct _UART_WRITE {
         REGISTER UARTTX;
@@ -113,6 +113,11 @@ void UART_register_read(UART_READ_t *read, REGISTER port, REGISTER reg, unsigned
  * @return 
  */
 bool UART_setBaudrate(UART_t* UART, unsigned long baudrate);
+/**
+ * 
+ * @param UART
+ */
+inline void UART_write_flush_buffer(UART_t* UART);
 /**
  * @brief The UART write controller. Required UART write configured.
  * @param UART The structure with UART configuration
