@@ -21,10 +21,40 @@
 
 #include "or_peripherals/GPIO/pwm.h"
 
+#define LNG_PWM_GENERATOR 2
+
 /******************************************************************************/
 /* Global Variable Declaration                                                */
 /******************************************************************************/
 
+bool PWM[LNG_PWM_GENERATOR];
+
 /******************************************************************************/
 /* Functions                                                                  */
 /******************************************************************************/
+
+void gpio_pwm_init() {
+    unsigned int i;
+    // If all PWM are disable switch off the PWM controller
+    for(i = 0; i < LNG_PWM_GENERATOR; ++i) {
+        PWM[i] = false;
+    }
+}
+
+void gpio_pwm_enable(unsigned int Idx, bool state) {
+    unsigned int i;
+    // set the new state
+    PWM[Idx] = state;
+    bool status = true;
+    // If all PWM are disable switch off the PWM controller
+    for(i = 0; i < LNG_PWM_GENERATOR; ++i) {
+        status |= PWM[i];
+    }
+    // set the new state 
+    PTCONbits.PTEN = state;
+}
+
+void gpio_pwm_set(unsigned int dutycyclereg, unsigned int dutycycle, 
+                char updatedisable) {
+    SetDCMCPWM1(dutycyclereg, dutycycle, updatedisable);
+}

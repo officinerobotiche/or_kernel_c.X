@@ -26,6 +26,9 @@ extern "C" {
 /*	INCLUDE																	  */
 /******************************************************************************/
 
+#include "or_peripherals/GPIO/gpio.h"
+#include <pwm12.h>
+    
 /******************************************************************************/
 /* System Level #define Macros                                                */
 /******************************************************************************/
@@ -33,7 +36,21 @@ extern "C" {
 /******************************************************************************/
 /*	FUNCTIONS							 									  */
 /******************************************************************************/
-
+/**
+ * 
+ * @param i
+ * @param state
+ */
+void gpio_pwm_enable(unsigned int i, bool state);
+/**
+ * 
+ * @param dutycyclereg
+ * @param dutycycle
+ * @param updatedisable
+ */
+void gpio_pwm_set(unsigned int dutycyclereg, unsigned int dutycycle, 
+                char updatedisable);
+    
 #ifdef	__cplusplus
 }
 #endif
