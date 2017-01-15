@@ -87,6 +87,12 @@ extern "C" {
      */
     bool task_set(hTask_t hTask, task_status_t run);
     /**
+     * Reset counter task
+     * @param hTask number task
+     * @return if task is correct return true
+     */
+    inline bool task_reset(hTask_t hTask);
+    /**
      * Change frequency operation 
      * @param hTask number task
      * @param frequency new frequency

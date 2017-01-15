@@ -106,6 +106,14 @@ bool task_set(hTask_t hTask, task_status_t run) {
     return false;
 }
 
+inline bool task_reset(hTask_t hTask) {
+    if(hTask != INVALID_TASK_HANDLE) {
+        tasks[hTask].counter = 0;
+        return true;
+    }
+    return false;
+}
+
 bool task_set_frequency(hTask_t hTask, frequency_t frequency) {
     if(hTask != INVALID_TASK_HANDLE) {
         if(frequency <= FREQ_TIMER && frequency > 0) {

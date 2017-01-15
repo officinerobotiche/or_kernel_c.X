@@ -67,6 +67,24 @@ void UART_register_read(UART_READ_t *read, REGISTER port, REGISTER reg, unsigned
     read->buff_rx_in = 0;
 }
 
+inline void UART_timeout_controller (int argc, int* argv) {
+    UART_t* _uart = ((UART_t*) argv[0]);
+    // Launch callback with error framing
+    _uart->read->UART_read_cb(UART_ERROR_TIMEOUT, 0);
+    // Run timeout controller
+    task_set(_uart->read->timeout, STOP);
+}
+
+bool UART_set_timeout(UART_t* UART, frequency_t frequency) {
+    // Initialization event read timeout controller
+    hEvent_t UART_timeout_event = register_event_p(&UART_timeout_controller, EVENT_PRIORITY_HIGH);
+    // Initialization task MeterCheck
+    UART->read->timeout = task_load_data(UART_timeout_event, frequency, 1, UART);
+    // Run timeout controller
+    task_set(UART->read->timeout, RUN);
+    return true;
+}
+
 bool UART_setBaudrate(UART_t* UART, unsigned long baudrate) {
     *UART->UBRG = ((UART->fcy/baudrate)/16)-1;  // Baud rate initialization
     return true;
@@ -75,8 +93,6 @@ bool UART_setBaudrate(UART_t* UART, unsigned long baudrate) {
 inline bool UART_isLocked(UART_t* UART) {
     return UART->write->lock;
 }
-
-static int temp = 0;
 
 inline UART_state_t UART_store(UART_t* UART, unsigned char* buff, size_t size) {
     unsigned int i;
@@ -93,7 +109,6 @@ inline UART_state_t UART_store(UART_t* UART, unsigned char* buff, size_t size) {
             }
         }
     }
-    temp = 1;
     return UART_STATE_FALSE;
 }
 
@@ -162,9 +177,10 @@ inline void UART_read_callback (int argc, int* argv) {
     UART->read->lock = true;
     // Run callback for all char inside the buffer
     while(UART->read->buff_rx_out != UART->read->buff_rx_in) {
+        // Copy received char
         unsigned char rxdata = UART->read->buff[UART->read->buff_rx_out];
         // Launch the read callback
-        UART->read->UART_read_cb(rxdata);
+        UART->read->UART_read_cb(UART_DONE, rxdata);
         // Update buffer RX out pointer
         UART->read->buff_rx_out = 
                 ((UART->read->buff_rx_out + 1) % LNG_UART_RX_QUEUE);
@@ -176,13 +192,16 @@ inline void UART_read_callback (int argc, int* argv) {
 inline void UART_read(UART_t* UART) {
     /* check for receive errors */
     if(REGISTER_MASK_READ(UART->UARTSTA, UART_STAT_MASK_FERR) == 1) {
-        // TODO Add error checking
+        // Launch callback with error framing
+        UART->read->UART_read_cb(UART_ERROR_FRAMING, 0);
     }
     /* get the data */
     if (REGISTER_MASK_READ(UART->UARTSTA, UART_STAT_MASK_OERR) == 0 && REGISTER_MASK_READ(UART->UARTSTA, UART_STAT_MASK_URXDA) == 1) {
+        // Reset timeout counter
+        task_reset(UART->read->timeout);
         // Read a char and decode a message
         unsigned int rxdata;
-        // Correction register UART2 with PDSEL selection
+        // Correction register UART with PDSEL selection
         if (REGISTER_MASK_READ(UART->UARTMODE, UART_MODE_MASK_PDSEL_3)) {
             rxdata = *UART->read->UARTRX;
         } else {
@@ -194,6 +213,9 @@ inline void UART_read(UART_t* UART) {
         unsigned int count = ((UART->read->buff_rx_in + 1) % LNG_UART_RX_QUEUE);
         if(count != UART->read->buff_rx_out) {
             UART->read->buff_rx_in = count;
+        } else {
+            // Launch callback with error framing
+            UART->read->UART_read_cb(UART_ERROR_BUFFERING, 0);
         }
         if(UART->read->lock == false) {
             // Run the read event
@@ -203,7 +225,8 @@ inline void UART_read(UART_t* UART) {
         /* must clear the overrun error to keep UART receiving */
         if (REGISTER_MASK_READ(UART->UARTSTA, UART_STAT_MASK_OERR) == 1) {
             REGISTER_MASK_SET_LOW(UART->UARTSTA, UART_STAT_MASK_OERR);
-            // TODO Add error checking
+            // Launch callback with error framing
+            UART->read->UART_read_cb(UART_ERROR_OVERRUN, 0);
         }
     }
     // Clear RX interrupt flag

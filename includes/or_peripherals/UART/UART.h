@@ -29,7 +29,7 @@ extern "C" {
     #include <stdbool.h>
     #include <string.h>
     #include "or_peripherals/GPIO/gpio.h"
-    #include "or_system/events.h"
+    #include "or_system/task_manager.h"
 
 #ifndef LNG_UART_TX_QUEUE
 #define LNG_UART_TX_QUEUE 2
@@ -39,6 +39,19 @@ extern "C" {
 #ifndef LNG_UART_RX_QUEUE
 #define LNG_UART_RX_QUEUE 200
 #endif
+    
+    typedef enum {
+        UART_DONE,
+        UART_ERROR_FRAMING,
+        UART_ERROR_OVERRUN,
+        UART_ERROR_BUFFERING,
+        UART_ERROR_TIMEOUT
+    } UART_status_type_t;
+#define LNG_UART_ERROR_TYPE_SIZE (sizeof(UART_status_type_t)+ 1)
+    
+    typedef struct _UARTError {
+        unsigned int counter;
+    } UART_error_t;
 
     typedef enum {
         UART_STATE_FALSE,
@@ -62,7 +75,7 @@ extern "C" {
         UARTbuff_t queque[LNG_UART_TX_QUEUE];
     } UART_WRITE_t;
     
-    typedef void (*UART_read_cb)(unsigned char rxdata);
+    typedef void (*UART_read_cb)(UART_status_type_t status, unsigned char rxdata);
     
     typedef struct _UART_READ {
         REGISTER UARTRX;
@@ -73,6 +86,7 @@ extern "C" {
         unsigned int buff_rx_out;
         bool lock;
         UART_read_cb UART_read_cb;
+        hTask_t timeout;
     } UART_READ_t;
     
     typedef struct _UART {
