@@ -75,14 +75,20 @@ inline void UART_timeout_controller (int argc, int* argv) {
     task_set(_uart->read->timeout, STOP);
 }
 
-bool UART_set_timeout(UART_t* UART, frequency_t frequency) {
+bool UART_init_timeout(UART_t* UART, frequency_t frequency) {
     // Initialization event read timeout controller
     hEvent_t UART_timeout_event = register_event_p(&UART_timeout_controller, EVENT_PRIORITY_HIGH);
     // Initialization task MeterCheck
     UART->read->timeout = task_load_data(UART_timeout_event, frequency, 1, UART);
-    // Run timeout controller
-    task_set(UART->read->timeout, RUN);
     return true;
+}
+
+void UART_set_timeout(UART_t* UART) {
+    // If no running run the timeout controller
+    if(!task_running(UART->read->timeout)) {
+            // Run timeout controller
+            task_set(UART->read->timeout, RUN);
+    }
 }
 
 bool UART_setBaudrate(UART_t* UART, unsigned long baudrate) {

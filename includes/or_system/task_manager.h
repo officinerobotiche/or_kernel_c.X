@@ -87,6 +87,12 @@ extern "C" {
      */
     bool task_set(hTask_t hTask, task_status_t run);
     /**
+     * Check if task running
+     * @param hTask number task
+     * @return Return true if running
+     */
+    bool task_running(hTask_t hTask);
+    /**
      * Reset counter task
      * @param hTask number task
      * @return if task is correct return true

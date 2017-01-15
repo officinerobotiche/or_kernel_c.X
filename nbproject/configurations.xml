@@ -13,6 +13,7 @@
           <itemPath>includes/or_peripherals/GPIO/change_notification.h</itemPath>
           <itemPath>includes/or_peripherals/GPIO/adc.h</itemPath>
           <itemPath>includes/or_peripherals/GPIO/led.h</itemPath>
+          <itemPath>includes/or_peripherals/GPIO/pwm.h</itemPath>
         </logicalFolder>
         <logicalFolder name="f2" displayName="I2C" projectFiles="true">
           <itemPath>includes/or_peripherals/I2C/led_pcf8574.h</itemPath>
@@ -50,6 +51,7 @@
           <itemPath>src/or_peripherals/GPIO/change_notification.c</itemPath>
           <itemPath>src/or_peripherals/GPIO/adc.c</itemPath>
           <itemPath>src/or_peripherals/GPIO/led.c</itemPath>
+          <itemPath>src/or_peripherals/GPIO/pwm.c</itemPath>
         </logicalFolder>
         <logicalFolder name="f2" displayName="I2C" projectFiles="true">
           <itemPath>src/or_peripherals/I2C/led_pcf8574.c</itemPath>
@@ -78,16 +80,8 @@
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
-    <Elem>src/peripherals</Elem>
-    <Elem>includes/peripherals</Elem>
-    <Elem>src/system</Elem>
-    <Elem>includes/system</Elem>
-    <Elem>src/or_system</Elem>
-    <Elem>src/or_peripherals</Elem>
-    <Elem>src/or_data</Elem>
-    <Elem>includes/or_system</Elem>
-    <Elem>includes/or_peripherals</Elem>
-    <Elem>includes/or_data</Elem>
+    <Elem>src</Elem>
+    <Elem>includes</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>

@@ -54,7 +54,7 @@ extern "C" {
     /// Invalid handle for event
     #define INVALID_EVENT_HANDLE 0xFFFF
     /// Definition of frequency
-    typedef uint32_t frequency_t;
+    typedef float frequency_t;
     /// Callback when the function start
     typedef void (*event_callback_t)(int argc, int* argv);
 /******************************************************************************/

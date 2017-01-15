@@ -97,6 +97,16 @@ hTask_t task_load_data(hEvent_t hEvent, frequency_t frequency, int argc, ...) {
     return INVALID_TASK_HANDLE;
 }
 
+bool task_running(hTask_t hTask) {
+    if(hTask != INVALID_TASK_HANDLE) {
+        if(tasks[hTask].run == RUN)
+            return true;
+        else 
+            return false;
+    }
+    return false;
+}
+
 bool task_set(hTask_t hTask, task_status_t run) {
     if(hTask != INVALID_TASK_HANDLE) {
         tasks[hTask].run = run;
