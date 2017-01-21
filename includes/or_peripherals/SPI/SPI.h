@@ -28,21 +28,39 @@ extern "C" {
     
     #include <stdbool.h>
     #include "or_peripherals/GPIO/gpio.h"
+    #include "or_system/task_manager.h"
 
     typedef enum {
         SPI_8bit = 1,
         SPI_16bit = 2
     } SPI_type;
     
+    typedef enum {
+        SPI_OK,
+        SPI_ERROR,
+        SPI_TIMEOUT
+    } SPI_status_t;
+    
     typedef struct _SPI_conf {
+        SPI_type TYPE;
+        bool cke;
+        bool ckp;
+        int primary_prescaler;
+        int secondary_prescaler;
+        frequency_t clock;
+    } SPI_conf_t;
+    
+#define SPI_CONF_INIT(type, cke, ckp, p, s) {type, cke, ckp, p, s, 0}
+    
+    typedef struct _SPI {
         REGISTER SPISTAT;
         REGISTER SPICON1;
         REGISTER SPIBUFF;
-        SPI_type TYPE;
-        bool lock;
-    } SPI_conf_t;
+        volatile bool lock;
+        SPI_status_t status;
+    } SPI_t;
     
-#define SPI_INIT(SPIstat, SPIcon1, SPIbuff, type) {&(SPIstat), &(SPIcon1), &(SPIbuff), type, false}
+#define SPI_INIT(SPIstat, SPIcon1, SPIbuff) {&(SPIstat), &(SPIcon1), &(SPIbuff), false, INVALID_TASK_HANDLE}
 
     /**
      * Definition of the chip select pin
@@ -65,46 +83,42 @@ extern "C" {
  * @brief Initialization SPI controller
  * @param SPI
  * @param isMaster
- * @param prescaler
- * @param postscaler
- * @param cke
- * @param ckp
+ * @param enable
  */
-void SPI_init(SPI_conf_t *SPI, bool isMaster, int prescaler, int postscaler, bool cke, bool ckp);
+void SPI_init(SPI_t *SPI, bool isMaster, bool enable);
 /**
  * 
  * @param SPI
- * @param cke
- * @param ckp
+ * @param conf
  */
-void SPI_setck(SPI_conf_t *SPI, bool cke, bool ckp);
+void SPI_config(SPI_t *SPI, SPI_conf_t *conf);
 /**
  * @brief set type of SPI
  * @param type
  */
-void SPI_setType(SPI_conf_t *SPI, SPI_type type);
+void SPI_setType(SPI_t *SPI, SPI_type type);
 /**
  * @brief Enable the SPI controller
  * @param enable set the state of the SPI controller
  */
-void SPI_enable(SPI_conf_t *SPI, bool enable);
+void SPI_enable(SPI_t *SPI, bool enable);
 /**
  * @brief Read the state of the SPI controller
  * @return the state of the SPI controller
  */
-bool SPI_isEnable(SPI_conf_t *SPI);
+bool SPI_isEnable(SPI_t *SPI);
 /**
  * @brief Set locking communication
  * @param SPI
  * @param lock
  */
-inline void SPI_lock(SPI_conf_t *SPI, bool lock);
+inline void SPI_lock(SPI_t *SPI, bool lock);
 /**
  * 
  * @param data
  * @return 
  */
-inline int SPI_read_write(SPI_conf_t *SPI, int data);
+inline int SPI_read_write(SPI_t *SPI, int data);
 /**
  * 
  * @param CS
@@ -113,7 +127,7 @@ inline int SPI_read_write(SPI_conf_t *SPI, int data);
  * @param size
  * @param size_data
  */
-void SPI_read_write_buff_new(SPI_conf_t *SPI, SPI_CS_pin_t *CS, int *buff_in, int *buff_out, size_t size);
+void SPI_read_write_buff_new(SPI_t *SPI, SPI_CS_pin_t *CS, int *buff_in, int *buff_out, size_t size);
 /**
  * 
  * @param CS
@@ -121,14 +135,14 @@ void SPI_read_write_buff_new(SPI_conf_t *SPI, SPI_CS_pin_t *CS, int *buff_in, in
  * @param buff_out
  * @param size
  */
-void SPI_read_write_buff(SPI_conf_t *SPI, SPI_CS_pin_t *CS, int8_t *buff_in, int8_t *buff_out, size_t size, size_t size_data);
+void SPI_read_write_buff(SPI_t *SPI, SPI_CS_pin_t *CS, int8_t *buff_in, int8_t *buff_out, size_t size, size_t size_data);
 /**
  * 
  * @param CS
  * @param data
  * @return 
  */
-int SPI_read_write_single(SPI_conf_t *SPI, SPI_CS_pin_t *CS, int data);
+int SPI_read_write_single(SPI_t *SPI, SPI_CS_pin_t *CS, int data);
 /**
  * @brief Initialization chip select
  * @param CS SPI chip select pin

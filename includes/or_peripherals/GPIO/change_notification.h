@@ -68,9 +68,10 @@ extern "C" {
      * @param cn The type of the change notification event. Read the 
      * @param type
      * @param callback
+     * @param obj Pointer a data to recall
      * @return the number of the CN registered
      */
-    hCNEvent_t gpio_cn_register(gpio_cn_t *cn, gpio_cn_type type, uint16_t event);
+    hCNEvent_t gpio_cn_register(gpio_cn_t *cn, gpio_cn_type type, uint16_t event, void *obj);
     /**
      * 
      * @param cn_eventIndex

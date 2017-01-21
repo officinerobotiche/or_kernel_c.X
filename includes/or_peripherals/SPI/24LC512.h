@@ -33,6 +33,10 @@
 #define EE24LC512_DEFAULT_PRIORITY EVENT_PRIORITY_CPU
 #endif
 
+#ifndef EE24LC512_DEFAULT_BUFF_SIZE
+#define EE24LC512_DEFAULT_BUFF_SIZE 10
+#endif
+
 #define DEFAULT_EEPROM_24LC512_MAX_SIZE 0xFFFF
 
 /******************************************************************************/
@@ -50,15 +54,34 @@ typedef struct _STATREG {
     char WPEN : 1;
 } STATREG_t;
 
+typedef enum {
+    EEPROM_READ,
+    EEPROM_WRITE,
+    EEPRO_ERASE
+} EEPPROM_type_t;
+
+typedef struct _EE24LC512buff {
+    bool pending;
+    EEPPROM_type_t type;
+    uint16_t Address;
+    char *buff;
+    size_t size;
+    EE24LC512_cb cb;
+    void *obj;
+} EE24LC512buff_t;
+
+
 typedef struct _EEPROMConf {
     SPI_CS_pin_t CS;
-    SPI_conf_t *SPI;
+    SPI_t *SPI;
+    SPI_conf_t conf;
     hTask_t eeprom_task;
     EE24LC512_cb cb;
     void *obj;
+    EE24LC512buff_t buff[10];
 } EE24LC512Conf_t;
 
-#define EE24LC512CONF_INIT(CS, SPI) {CS, &(SPI), INVALID_TASK_HANDLE, NULL, NULL}
+#define EE24LC512CONF_INIT(CS, SPI) {CS, &(SPI), SPI_CONF_INIT(SPI_8bit, false, false, 2, 7), INVALID_TASK_HANDLE, NULL, NULL}
 
 /******************************************************************************/
 /* System Function Prototypes                                                 */

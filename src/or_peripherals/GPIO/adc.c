@@ -67,8 +67,10 @@ void gpio_adc_init(REGISTER AD1CON, REGISTER analog) {
         ADC_event[adc_eventIndex].obj = NULL;
     }
     _AD1CON = AD1CON;
-    // Default set low digital all ADC pins
-    REGISTER_MASK_SET_HIGH(analog, 0xFFFF);
+    if(analog != NULL) {
+        // Default set low digital all ADC pins
+        REGISTER_MASK_SET_HIGH(analog, 0xFFFF);
+    }
 }
 
 hADCEvent_t gpio_adc_register(gpio_adc_t *adc, size_t size, adc_callback_t cb, void* obj) {
@@ -83,9 +85,12 @@ hADCEvent_t gpio_adc_register(gpio_adc_t *adc, size_t size, adc_callback_t cb, v
             ADC_event[adc_eventIndex].obj = obj;
             // Initialize all ADC GPIO and set output
             for(i = 0; i < ADC_event[adc_eventIndex].size; ++i) {
+                // Initialize GPIO port
                 gpio_init_pin(&ADC_event[adc_eventIndex].adc_pin[i].gpio);
+                // Setup port
                 gpio_set_pin(&ADC_event[adc_eventIndex].adc_pin[i].gpio, GPIO_OUTPUT);
-                REGISTER_MASK_SET_LOW(ADC_event[adc_eventIndex].adc_pin[i].ANALOG, 
+                // Change status analog port
+                REGISTER_MASK_SET_LOW(ADC_event[adc_eventIndex].adc_pin[i].ANALOG,
                         ADC_event[adc_eventIndex].adc_pin[i].CS_mask);
             }
             spin_unlock(&adc_lock);
@@ -100,10 +105,10 @@ void gpio_adc_pin_enable(hADCEvent_t adc_eventIndex, bool enable) {
     if(adc_eventIndex != INVALID_ADC_EVENT_HANDLE) {
         for(i = 0; i < ADC_event[adc_eventIndex].size; ++i) {
             if(enable) {
-                REGISTER_MASK_SET_LOW(ADC_event[adc_eventIndex].adc_pin[i].ANALOG, 
+                REGISTER_MASK_SET_LOW(ADC_event[adc_eventIndex].adc_pin[i].ANALOG,
                         ADC_event[adc_eventIndex].adc_pin[i].CS_mask);
             } else {
-                REGISTER_MASK_SET_HIGH(ADC_event[adc_eventIndex].adc_pin[i].ANALOG, 
+                REGISTER_MASK_SET_HIGH(ADC_event[adc_eventIndex].adc_pin[i].ANALOG,
                         ADC_event[adc_eventIndex].adc_pin[i].CS_mask);
             }
         }
@@ -114,18 +119,21 @@ inline void ADC_controller(unsigned int *buffer) {
     hADCEvent_t adc_eventIndex;
     ADC_EVENT *adcEvent;
     unsigned int i, adc_pinIndex;
-    unsigned long temp;
     lock(&adc_lock, true);
     for (adc_eventIndex = 0; adc_eventIndex < MAX_ADC_EVENT; ++adc_eventIndex) {
         adcEvent = &ADC_event[adc_eventIndex];
-        for(adc_pinIndex = 0; adc_pinIndex < adcEvent->size; ++adc_pinIndex) {
-            for(i = 0; i < adcEvent->adc_pin[adc_pinIndex].length; ++i) {
-                temp += (buffer)[i+adcEvent->adc_pin[adc_pinIndex].start];
+        if (adcEvent->cb != NULL) {
+            for (adc_pinIndex = 0; adc_pinIndex < adcEvent->size; ++adc_pinIndex) {
+                unsigned long temp = 0;
+                for (i = 0; i < adcEvent->adc_pin[adc_pinIndex].length; ++i) {
+                    temp += (buffer)[i + adcEvent->adc_pin[adc_pinIndex].start];
+                }
+                // Mean value
+                temp /= adcEvent->adc_pin[adc_pinIndex].length;
+                // save the value on variable
+                adcEvent->adc_pin[adc_pinIndex].value = temp;
             }
-            adcEvent->adc_pin[adc_pinIndex].value /= adcEvent->adc_pin[adc_pinIndex].length;
-        }
-        // Run the ADC event
-        if(adcEvent->cb != NULL) {
+            // Run the ADC event
             adcEvent->cb(adcEvent->obj);
         }
     }

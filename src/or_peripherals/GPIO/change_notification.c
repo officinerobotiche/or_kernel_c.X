@@ -31,6 +31,7 @@ typedef struct _tagEventCN {
     bool enable;
     hEvent_t event;
     gpio_cn_type type;
+    void *obj;
 } CN_EVENT;
 
 /******************************************************************************/
@@ -54,11 +55,12 @@ void gpio_cn_init() {
     }
 }
 
-hCNEvent_t gpio_cn_register(gpio_cn_t *cn, gpio_cn_type type, hEvent_t event) {
+hCNEvent_t gpio_cn_register(gpio_cn_t *cn, gpio_cn_type type, hEvent_t event, void *obj) {
     hCNEvent_t cn_eventIndex;
     for(cn_eventIndex = 0; cn_eventIndex < MAX_CN_EVENT; ++cn_eventIndex) {
         if(CN_event[cn_eventIndex].cn_pin == NULL) {
             CN_event[cn_eventIndex].cn_pin = cn;
+            CN_event[cn_eventIndex].obj = obj;
             CN_event[cn_eventIndex].type = type;
             CN_event[cn_eventIndex].event = event;
             return cn_eventIndex;
@@ -96,12 +98,11 @@ inline void change_notification_controller() {
         if (cnEvent->enable) {
             if (cnEvent->type == CN_ALWAYS) {
                 // Run the event callback when the state is 
-                trigger_event(cnEvent->event);
+                trigger_event_data(cnEvent->event, 1, cnEvent->obj);
             } else if (gpio_get_pin(&cnEvent->cn_pin->gpio) == cnEvent->type) {
                 // Run the event callback when the state is 
-                trigger_event(cnEvent->event);
+                trigger_event_data(cnEvent->event, 1, cnEvent->obj);
             }
         }
     }
 }
-

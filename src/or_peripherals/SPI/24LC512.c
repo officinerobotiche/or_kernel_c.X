@@ -45,12 +45,6 @@
 /* Variable Declaration                                                       */
 /******************************************************************************/
 
-typedef enum {
-    EEPROM_READ,
-    EEPROM_WRITE,
-    EEPRO_ERASE
-} EEPPROM_type_t;
-
 typedef union _EEPROMstatus {
     STATREG_t status;
     char bits;
@@ -66,6 +60,8 @@ typedef union _EEPROMstatus {
 inline void EE24LC512_write_enable(EE24LC512Conf_t* EEPROMConf) {
     // Locking SPI communication
     SPI_lock(EEPROMConf->SPI, true);
+    // Reconfigure the SPI
+    SPI_config(EEPROMConf->SPI, &EEPROMConf->conf);
     // Write the enable SPI command to the EEPROM
     SPI_read_write_single(EEPROMConf->SPI, &EEPROMConf->CS, EEPROM_CMD_WREN);
     // Unlocking SPI communication
@@ -78,6 +74,8 @@ inline void EE24LC512_write_enable(EE24LC512Conf_t* EEPROMConf) {
 inline void EE24LC512_write_disable(EE24LC512Conf_t* EEPROMConf) {
     // Locking SPI communication
     SPI_lock(EEPROMConf->SPI, true);
+    // Reconfigure the SPI
+    SPI_config(EEPROMConf->SPI, &EEPROMConf->conf);
     // Write the disable SPI command to the EEPROM
     SPI_read_write_single(EEPROMConf->SPI, &EEPROMConf->CS, EEPROM_CMD_WRDI);
     // Unlocking SPI communication
@@ -92,18 +90,14 @@ inline STATREG_t EE24LC512_read_status(EE24LC512Conf_t* EEPROMConf) {
     EEPROMstatus_t statreg;
     // Locking SPI communication
     SPI_lock(EEPROMConf->SPI, true);
-    // Get the SPI configuration
-    SPI_type type = EEPROMConf->SPI->TYPE;
-    // Set in 8bit mode the SPI
-    SPI_setType(EEPROMConf->SPI, SPI_8bit);
+    // Set the SPI configuration
+    SPI_config(EEPROMConf->SPI, &EEPROMConf->conf);
     // Set low the chip select (CS) of the SPI controller
     SPI_CS_Low(&EEPROMConf->CS);
     // Write the EEPROM command to know the EEPROM status
     SPI_read_write(EEPROMConf->SPI, EEPROM_CMD_RDSR);
     // Get the EEPROM status
     statreg.bits = SPI_read_write(EEPROMConf->SPI, 0);
-    // Restore the SPI configuration
-    SPI_setType(EEPROMConf->SPI, type);
     // Set High the chip select (CS) of the SPI controller
     SPI_CS_High(&EEPROMConf->CS);
     // Unlocking SPI communication
@@ -137,6 +131,19 @@ void EE24LC512_init(EE24LC512Conf_t* EEPROMConf) {
 }
 
 bool EE24LC512_store(EE24LC512Conf_t* EEPROM, EEPPROM_type_t type, uint16_t Address, char *buff, size_t size, EE24LC512_cb cb, void *obj) {
+    unsigned int Idx;
+    for(Idx = 0; Idx < EE24LC512_DEFAULT_BUFF_SIZE; ++Idx) {
+        if(EEPROM->buff[Idx].pending == false) {
+            EEPROM->buff[Idx].pending = true;
+            EEPROM->buff[Idx].type = type;
+            EEPROM->buff[Idx].Address = Address;
+            EEPROM->buff[Idx].buff = buff;
+            EEPROM->buff[Idx].size = size;
+            EEPROM->buff[Idx].cb = cb;
+            EEPROM->buff[Idx].obj = obj;
+            return true;
+        }
+    }
     return false;
 }
 
@@ -157,12 +164,10 @@ bool EE24LC512_write(void* EEPROM, uint16_t Address, char *buff, size_t size, EE
     } else {
         // Enable EEPROM write
         EE24LC512_write_enable(_eeprom);
-        // Get the SPI configuration
-        SPI_type type = _eeprom->SPI->TYPE;
         // Locking SPI communication
         SPI_lock(_eeprom->SPI, true);
-        // Set in 8bit mode the SPI
-        SPI_setType(_eeprom->SPI, SPI_8bit);
+        // Set the SPI configuration
+        SPI_config(_eeprom->SPI, &_eeprom->conf);
         // Set low the chip select (CS) of the SPI controller
         SPI_CS_Low(&_eeprom->CS);
         // Write the EEPROM command to write
@@ -174,8 +179,6 @@ bool EE24LC512_write(void* EEPROM, uint16_t Address, char *buff, size_t size, EE
         for(i = 0; i < size; ++i) {
             SPI_read_write(_eeprom->SPI, buff[i]);
         }
-        // Restore the SPI configuration
-        SPI_setType(_eeprom->SPI, type);
         // Set High the chip select (CS) of the SPI controller
         SPI_CS_High(&_eeprom->CS);
         if(cb == NULL) {
@@ -213,12 +216,10 @@ bool EE24LC512_read(void* EEPROM, uint16_t Address, char *buff, size_t size, EE2
     if(_eeprom->SPI->lock) {
         return EE24LC512_store(_eeprom, EEPROM_READ, Address, buff, size, cb, obj);
     } else {
-        // Get the SPI configuration
-        SPI_type type = _eeprom->SPI->TYPE;
         // Locking SPI communication
         SPI_lock(_eeprom->SPI, true);
-        // Set in 8bit mode the SPI
-        SPI_setType(_eeprom->SPI, SPI_8bit);
+        // Set the SPI configuration
+        SPI_config(_eeprom->SPI, &_eeprom->conf);
         // Set low the chip select (CS) of the SPI controller
         SPI_CS_Low(&_eeprom->CS);
         // Write the EEPROM command to read
@@ -232,8 +233,6 @@ bool EE24LC512_read(void* EEPROM, uint16_t Address, char *buff, size_t size, EE2
         }
         // Set High the chip select (CS) of the SPI controller
         SPI_CS_High(&_eeprom->CS);
-        // Restore the SPI configuration
-        SPI_setType(_eeprom->SPI, type);
         // Unlocking SPI communication
         SPI_lock(_eeprom->SPI, false);
         // Run the callback if exist
@@ -262,10 +261,8 @@ bool EE24LC512_erase_controller(void* EEPROM, uint16_t Address, unsigned int typ
         SPI_lock(_eeprom->SPI, true);
         // Enable EEPROM write
         EE24LC512_write_enable(_eeprom);
-        // Get the SPI configuration
-        SPI_type type = _eeprom->SPI->TYPE;
-        // Set in 8bit mode the SPI
-        SPI_setType(_eeprom->SPI, SPI_8bit);
+        // Set the SPI configuration
+        SPI_config(_eeprom->SPI, &_eeprom->conf);
         // Set low the chip select (CS) of the SPI controller
         SPI_CS_Low(&_eeprom->CS);
         // Write the EEPROM command to write
@@ -276,8 +273,6 @@ bool EE24LC512_erase_controller(void* EEPROM, uint16_t Address, unsigned int typ
             SPI_read_write(_eeprom->SPI, Hi(Address));
             SPI_read_write(_eeprom->SPI, Lo(Address));
         }
-        // Restore the SPI configuration
-        SPI_setType(_eeprom->SPI, type);
         // Set High the chip select (CS) of the SPI controller
         SPI_CS_High(&_eeprom->CS);
         if (cb == NULL) {
