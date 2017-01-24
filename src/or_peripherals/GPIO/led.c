@@ -73,7 +73,7 @@ void LED_Init(LED_controller_t *controller) {
         LED_updateBlink(controller, i, LED_OFF);
     }
     /// Register event
-    hEvent_t LED_service_handle = register_event(&LED_blinkController);
+    hEvent_t LED_service_handle = register_event_p(&LED_blinkController, EVENT_PRIORITY_LOW);
     // Register task
     hTask_t LED_task_handle = task_load_data(LED_service_handle, controller->freq_cqu, 1, controller);
     /// Run task controller

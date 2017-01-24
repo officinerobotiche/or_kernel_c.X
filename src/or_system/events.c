@@ -179,9 +179,8 @@ bool unregister_event(hEvent_t eventIndex) {
 }
 
 inline void event_manager(eventPriority priority) {
-    int save_to;
     if (event_counter > 0) {
-        hEvent_t eventIndex;
+        static hEvent_t eventIndex;
         EVENT* pEvent;
         for (eventIndex = 0; eventIndex < MAX_EVENTS; ++eventIndex) {
             pEvent = &events[eventIndex];
@@ -191,10 +190,8 @@ inline void event_manager(eventPriority priority) {
                     pEvent->eventPending = WORKING;
                     pEvent->overTmr = 0;                                            ///< Reset timer
                     time = *timer;                                                  ///< Timing function
-                    SET_AND_SAVE_CPU_IPL(save_to, 7);
                     pEvent->event_callback(pEvent->argc, pEvent->argv);             ///< Launch callback
                     pEvent->eventPending = FALSE;                                   ///< Complete event
-                    RESTORE_CPU_IPL(save_to);
                     // Time of execution
                     if(pEvent->overTmr == 0) {
                         pEvent->time = (*timer) - time;

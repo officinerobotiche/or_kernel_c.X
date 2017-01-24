@@ -48,10 +48,6 @@ extern "C" {
         UART_ERROR_TIMEOUT
     } UART_status_type_t;
 #define LNG_UART_ERROR_TYPE_SIZE (sizeof(UART_status_type_t)+ 1)
-    
-    typedef struct _UARTError {
-        unsigned int counter;
-    } UART_error_t;
 
     typedef enum {
         UART_STATE_FALSE,
@@ -59,7 +55,7 @@ extern "C" {
         UART_STATE_PENDING,
     } UART_state_t;
     
-    typedef struct _UARTbuff {
+    typedef struct __attribute__ ((__packed__)) _UARTbuff {
         bool pending;
         unsigned char buff[LNG_UART_TX_QUEUE_BUFF];
         size_t size;
@@ -67,29 +63,30 @@ extern "C" {
     
     typedef void (*UART_ext_write)(unsigned char* buff, size_t size);
     
-    typedef struct _UART_WRITE {
+    typedef struct __attribute__ ((__packed__)) _UART_WRITE {
         REGISTER UARTTX;
-        bool lock;
+        volatile bool lock;
         UART_ext_write cb;
-        unsigned int queue_counter;
+        volatile unsigned int queue_counter;
         UARTbuff_t queque[LNG_UART_TX_QUEUE];
+        bool flushing;
     } UART_WRITE_t;
     
     typedef void (*UART_read_cb)(UART_status_type_t status, unsigned char rxdata);
     
-    typedef struct _UART_READ {
+    typedef struct __attribute__ ((__packed__)) _UART_READ {
         REGISTER UARTRX;
         hardware_bit_t UART_INT;
         hEvent_t read_event;
         unsigned char buff[LNG_UART_RX_QUEUE];
-        unsigned int buff_rx_in;
-        unsigned int buff_rx_out;
-        bool lock;
+        volatile unsigned int buff_rx_in;
+        volatile unsigned int buff_rx_out;
+        volatile bool lock;
         UART_read_cb UART_read_cb;
         hTask_t timeout;
     } UART_READ_t;
     
-    typedef struct _UART {
+    typedef struct __attribute__ ((__packed__)) _UART {
         REGISTER UARTSTA;
         REGISTER UARTMODE;
         REGISTER UBRG;
@@ -139,7 +136,7 @@ inline void UART_write_flush_buffer(UART_t* UART);
  * @param size the size of buffer
  * @return The state of UART controller
  */
-inline UART_state_t UART_write(UART_t* UART, unsigned char* buff, size_t size);
+UART_state_t UART_write(UART_t* UART, unsigned char* buff, size_t size);
 /**
  * @brief The UART READ controller. Required UART read configured.
  * @param UART The structure with UART configuration
